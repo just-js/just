@@ -17,17 +17,10 @@ builtins.h: just.js lib/*.js ## compile builtins js
 	sed -i 's/unsigned char/const char/g' builtins.h
 	sed -i 's/unsigned int/unsigned int/g' builtins.h
 
-v8lib: ## build v8 library
-	docker build -t v8-build .
-
-v8deps: ## copy libs and includes from docker image
-	mkdir -p deps/v8
-	docker run -dt --rm --name v8-build v8-build /bin/sh
-	docker cp v8-build:/build/v8/out.gn/x64.release/obj/libv8_monolith.a deps/v8/libv8_monolith.a
-	docker cp v8-build:/build/v8/include deps/v8/
-	docker cp v8-build:/build/v8/src deps/v8/
-	docker cp v8-build:/build/v8/out.gn/x64.release/gen deps/v8/
-	docker kill v8-build
+deps: ## download v8 lib and headers
+	mkdir -p deps
+	curl -L -o deps/v8.tar.gz https://github.com/just-js/libv8/raw/master/v8.tar.gz
+	tar -zxvf deps/v8.tar.gz
 
 runtime: builtins.h deps/v8/libv8_monolith.a ## build runtime
 	$(CC) -c -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wall -Wextra -flto -Wno-unused-parameter just.cc

@@ -7,7 +7,7 @@ A very small v8 javascript runtime for linux only
 - g++ or clang++
 - make
 - xxd
-- docker (for building v8 lib)
+- curl (to download dependencies)
 
 ## Build
 ```bash
