@@ -3,19 +3,18 @@
 A very small v8 javascript runtime for linux only
 
 ## Prerequisites
-- modern x86_64 linux
-- g++ or clang++
+- builds on debian/ubuntu with precompiled libv8
+- g++
 - make
-- xxd
 - curl (to download dependencies)
 
 ## Build
 ```bash
-make v8lib && make v8deps && make runtime && make install
+make runtime
 ```
 
 ## Summary
 - 15 MB binary
 - 9MB RSS on startup
-- 14MB RSS
+- 14MB RSS stable
 - Single C++ header file

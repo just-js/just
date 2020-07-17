@@ -2161,18 +2161,6 @@ void Init(Isolate* isolate, Local<ObjectTemplate> target) {
 
 namespace sha1 {
 
-static char encoding_table[] = {
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
-  'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-  'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
-  'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
-  'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-  'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-  'w', 'x', 'y', 'z', '0', '1', '2', '3',
-  '4', '5', '6', '7', '8', '9', '+', '/'
-};
-static int mod_table[] = {0, 2, 1};
-
 inline unsigned int rol(const unsigned int value, const unsigned int steps)
 {
   return ((value << steps) | (value >> (32 - steps)));
@@ -2626,120 +2614,122 @@ int CreateIsolate(int argc, char** argv, InitModulesCallback InitModules,
   create_params.array_buffer_allocator = 
     ArrayBuffer::Allocator::NewDefaultAllocator();
   Isolate *isolate = Isolate::New(create_params);
-  Isolate::Scope isolate_scope(isolate);
-  HandleScope handle_scope(isolate);
-  isolate->SetCaptureStackTraceForUncaughtExceptions(true, 1000, 
-    StackTrace::kDetailed);
+  {
+    Isolate::Scope isolate_scope(isolate);
+    HandleScope handle_scope(isolate);
+    isolate->SetCaptureStackTraceForUncaughtExceptions(true, 1000, 
+      StackTrace::kDetailed);
 
-  Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
+    Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 
-  Local<ObjectTemplate> just = ObjectTemplate::New(isolate);
-  SET_METHOD(isolate, just, "print", just::Print);
-  SET_METHOD(isolate, just, "error", just::Error);
-  SET_VALUE(isolate, just, "START", BigInt::New(isolate, start));
+    Local<ObjectTemplate> just = ObjectTemplate::New(isolate);
+    SET_METHOD(isolate, just, "print", just::Print);
+    SET_METHOD(isolate, just, "error", just::Error);
+    SET_VALUE(isolate, just, "START", BigInt::New(isolate, start));
 
-  InitModules(isolate, just);
+    InitModules(isolate, just);
 
-  global->Set(String::NewFromUtf8Literal(isolate, "just", 
-    NewStringType::kNormal), just);
+    global->Set(String::NewFromUtf8Literal(isolate, "just", 
+      NewStringType::kNormal), just);
 
-  Local<Context> context = Context::New(isolate, NULL, global);
-  Context::Scope context_scope(context);
-  context->AllowCodeGenerationFromStrings(false);
-  isolate->SetPromiseRejectCallback(PromiseRejectCallback);
-  Local<Array> arguments = Array::New(isolate);
-  for (int i = 0; i < argc; i++) {
-    arguments->Set(context, i, String::NewFromUtf8(isolate, argv[i], 
-      NewStringType::kNormal, strlen(argv[i])).ToLocalChecked()).Check();
-  }
-  Local<Object> globalInstance = context->Global();
-  globalInstance->Set(context, String::NewFromUtf8Literal(isolate, 
-    "global", 
-    NewStringType::kNormal), globalInstance).Check();
-  Local<Value> obj = globalInstance->Get(context, 
-    String::NewFromUtf8Literal(
-      isolate, "just", 
-      NewStringType::kNormal)).ToLocalChecked();
-  Local<Object> justInstance = Local<Object>::Cast(obj);
-  if (buf != NULL) {
-    std::unique_ptr<BackingStore> backing =
-        SharedArrayBuffer::NewBackingStore(buf->iov_base, buf->iov_len, 
-        just::sys::FreeMemory, nullptr);
-    Local<SharedArrayBuffer> ab =
-        SharedArrayBuffer::New(isolate, std::move(backing));
-    justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
-      "buffer", NewStringType::kNormal), ab).Check();
-  }
-  if (fd != 0) {
-    justInstance->Set(context, String::NewFromUtf8Literal(isolate, "fd", 
-      NewStringType::kNormal), 
-      Integer::New(isolate, fd)).Check();
-  }
-  justInstance->Set(context, String::NewFromUtf8Literal(isolate, "args", 
-    NewStringType::kNormal), arguments).Check();
-  if (js_len > 0) {
-    justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
-      "workerSource", NewStringType::kNormal), 
-      String::NewFromUtf8(isolate, js, NewStringType::kNormal, 
-      js_len).ToLocalChecked()).Check();
-  }
-  TryCatch try_catch(isolate);
-  ScriptOrigin baseorigin(
-    String::NewFromUtf8Literal(isolate, "just.js", 
-    NewStringType::kNormal), // resource name
-    Integer::New(isolate, 0), // line offset
-    Integer::New(isolate, 0),  // column offset
-    False(isolate), // is shared cross-origin
-    Local<Integer>(),  // script id
-    Local<Value>(), // source map url
-    False(isolate), // is opaque
-    False(isolate), // is wasm
-    True(isolate)  // is module
-  );
-  Local<Module> module;
-  Local<String> base;
-  builtin* main = builtins["just"];
-  if (main == nullptr) {
-    return 1;
-  }
-  base = String::NewFromUtf8(isolate, main->source, NewStringType::kNormal, 
-    main->size).ToLocalChecked();
-  ScriptCompiler::Source basescript(base, baseorigin);
-  if (!ScriptCompiler::CompileModule(isolate, &basescript).ToLocal(&module)) {
-    PrintStackTrace(isolate, try_catch);
-    return 1;
-  }
-
-  Maybe<bool> ok = module->InstantiateModule(context, 
-    just::OnModuleInstantiate);
-  if (!ok.ToChecked()) {
-    just::PrintStackTrace(isolate, try_catch);
-    return 1;
-  }
-
-  MaybeLocal<Value> result = module->Evaluate(context);
-  if (result.IsEmpty()) {
-    if (try_catch.HasCaught()) {
-      just::PrintStackTrace(isolate, try_catch);
-      return 2;
+    Local<Context> context = Context::New(isolate, NULL, global);
+    Context::Scope context_scope(context);
+    context->AllowCodeGenerationFromStrings(false);
+    isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+    Local<Array> arguments = Array::New(isolate);
+    for (int i = 0; i < argc; i++) {
+      arguments->Set(context, i, String::NewFromUtf8(isolate, argv[i], 
+        NewStringType::kNormal, strlen(argv[i])).ToLocalChecked()).Check();
     }
-  }
+    Local<Object> globalInstance = context->Global();
+    globalInstance->Set(context, String::NewFromUtf8Literal(isolate, 
+      "global", 
+      NewStringType::kNormal), globalInstance).Check();
+    Local<Value> obj = globalInstance->Get(context, 
+      String::NewFromUtf8Literal(
+        isolate, "just", 
+        NewStringType::kNormal)).ToLocalChecked();
+    Local<Object> justInstance = Local<Object>::Cast(obj);
+    if (buf != NULL) {
+      std::unique_ptr<BackingStore> backing =
+          SharedArrayBuffer::NewBackingStore(buf->iov_base, buf->iov_len, 
+          just::sys::FreeMemory, nullptr);
+      Local<SharedArrayBuffer> ab =
+          SharedArrayBuffer::New(isolate, std::move(backing));
+      justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
+        "buffer", NewStringType::kNormal), ab).Check();
+    }
+    if (fd != 0) {
+      justInstance->Set(context, String::NewFromUtf8Literal(isolate, "fd", 
+        NewStringType::kNormal), 
+        Integer::New(isolate, fd)).Check();
+    }
+    justInstance->Set(context, String::NewFromUtf8Literal(isolate, "args", 
+      NewStringType::kNormal), arguments).Check();
+    if (js_len > 0) {
+      justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
+        "workerSource", NewStringType::kNormal), 
+        String::NewFromUtf8(isolate, js, NewStringType::kNormal, 
+        js_len).ToLocalChecked()).Check();
+    }
+    TryCatch try_catch(isolate);
+    ScriptOrigin baseorigin(
+      String::NewFromUtf8Literal(isolate, "just.js", 
+      NewStringType::kNormal), // resource name
+      Integer::New(isolate, 0), // line offset
+      Integer::New(isolate, 0),  // column offset
+      False(isolate), // is shared cross-origin
+      Local<Integer>(),  // script id
+      Local<Value>(), // source map url
+      False(isolate), // is opaque
+      False(isolate), // is wasm
+      True(isolate)  // is module
+    );
+    Local<Module> module;
+    Local<String> base;
+    builtin* main = builtins["just"];
+    if (main == nullptr) {
+      return 1;
+    }
+    base = String::NewFromUtf8(isolate, main->source, NewStringType::kNormal, 
+      main->size).ToLocalChecked();
+    ScriptCompiler::Source basescript(base, baseorigin);
+    if (!ScriptCompiler::CompileModule(isolate, &basescript).ToLocal(&module)) {
+      PrintStackTrace(isolate, try_catch);
+      return 1;
+    }
 
-  Local<Value> func = globalInstance->Get(context, 
-    String::NewFromUtf8Literal(isolate, "onExit", 
-      NewStringType::kNormal)).ToLocalChecked();
-  if (func->IsFunction()) {
-    Local<Function> onExit = Local<Function>::Cast(func);
-    Local<Value> argv[0] = { };
-    MaybeLocal<Value> result = onExit->Call(context, globalInstance, 0, argv);
-    if (!result.IsEmpty()) {
+    Maybe<bool> ok = module->InstantiateModule(context, 
+      just::OnModuleInstantiate);
+    if (!ok.ToChecked()) {
+      just::PrintStackTrace(isolate, try_catch);
+      return 1;
+    }
+
+    MaybeLocal<Value> result = module->Evaluate(context);
+    if (result.IsEmpty()) {
+      if (try_catch.HasCaught()) {
+        just::PrintStackTrace(isolate, try_catch);
+        return 2;
+      }
+    }
+
+    Local<Value> func = globalInstance->Get(context, 
+      String::NewFromUtf8Literal(isolate, "onExit", 
+        NewStringType::kNormal)).ToLocalChecked();
+    if (func->IsFunction()) {
+      Local<Function> onExit = Local<Function>::Cast(func);
+      Local<Value> argv[0] = { };
+      MaybeLocal<Value> result = onExit->Call(context, globalInstance, 0, argv);
+      if (!result.IsEmpty()) {
+        statusCode = result.ToLocalChecked()->Uint32Value(context).ToChecked();
+      }
+      if (try_catch.HasCaught() && !try_catch.HasTerminated()) {
+        just::PrintStackTrace(isolate, try_catch);
+        return 2;
+      }
       statusCode = result.ToLocalChecked()->Uint32Value(context).ToChecked();
     }
-    if (try_catch.HasCaught() && !try_catch.HasTerminated()) {
-      just::PrintStackTrace(isolate, try_catch);
-      return 2;
-    }
-    statusCode = result.ToLocalChecked()->Uint32Value(context).ToChecked();
   }
   isolate->ContextDisposedNotification();
   isolate->LowMemoryNotification();
