@@ -1,0 +1,7 @@
+just
+builtins.h
+.ccache
+.vscode
+deps
+*.o
+*.a
