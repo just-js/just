@@ -5,14 +5,14 @@ namespace embedder {
 
 void InitModules(Isolate* isolate, Local<ObjectTemplate> just) {
   just::InitModules(isolate, just);
-  just_builtins_add("repl", lib_repl_js, lib_repl_js_len);
-  just_builtins_add("inspector", lib_inspector_js, lib_inspector_js_len);
-  just_builtins_add("websocket", lib_websocket_js, lib_websocket_js_len);
-  just_builtins_add("fs", lib_fs_js, lib_fs_js_len);
-  just_builtins_add("just", just_js, just_js_len);
-  just_builtins_add("path", lib_path_js, lib_path_js_len);
-  just_builtins_add("loop", lib_loop_js, lib_loop_js_len);
-  just_builtins_add("require", lib_require_js, lib_require_js_len);
+  just_builtins_add("repl", _binary_lib_repl_js_start, _binary_lib_repl_js_end - _binary_lib_repl_js_start);
+  just_builtins_add("inspector", _binary_lib_inspector_js_start, _binary_lib_inspector_js_end - _binary_lib_inspector_js_start);
+  just_builtins_add("websocket", _binary_lib_websocket_js_start, _binary_lib_websocket_js_end - _binary_lib_websocket_js_start);
+  just_builtins_add("fs", _binary_lib_fs_js_start, _binary_lib_fs_js_end - _binary_lib_fs_js_start);
+  just_builtins_add("just", _binary_just_js_start, _binary_just_js_end - _binary_just_js_start);
+  just_builtins_add("path", _binary_lib_path_js_start, _binary_lib_path_js_end - _binary_lib_path_js_start);
+  just_builtins_add("loop", _binary_lib_loop_js_start, _binary_lib_loop_js_end - _binary_lib_loop_js_start);
+  just_builtins_add("require", _binary_lib_require_js_start, _binary_lib_require_js_end - _binary_lib_require_js_start);
 }
 
 int Start(int argc, char** argv) {

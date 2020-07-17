@@ -23,11 +23,27 @@
 #include <sys/stat.h>
 #include <v8-inspector.h>
 #include <map>
-#include "builtins.h"
 
 #define JUST_MAX_HEADERS 32
 #define JUST_MICROS_PER_SEC 1e6
 #define JUST_VERSION "0.0.1"
+
+extern char _binary_lib_repl_js_end[];
+extern char _binary_lib_repl_js_start[];
+extern char _binary_lib_inspector_js_end[];
+extern char _binary_lib_inspector_js_start[];
+extern char _binary_lib_websocket_js_end[];
+extern char _binary_lib_websocket_js_start[];
+extern char _binary_lib_fs_js_end[];
+extern char _binary_lib_fs_js_start[];
+extern char _binary_just_js_end[];
+extern char _binary_just_js_start[];
+extern char _binary_lib_path_js_end[];
+extern char _binary_lib_path_js_start[];
+extern char _binary_lib_loop_js_end[];
+extern char _binary_lib_loop_js_start[];
+extern char _binary_lib_require_js_end[];
+extern char _binary_lib_require_js_start[];
 
 namespace just {
 
