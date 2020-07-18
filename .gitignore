@@ -1,7 +1,9 @@
 just
 builtins.h
 .ccache
+scratch
 .vscode
+out
 deps
 *.o
 *.a

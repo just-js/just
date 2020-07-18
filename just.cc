@@ -1,5 +1,22 @@
 #include "just.h"
 
+extern char _binary_lib_repl_js_end[];
+extern char _binary_lib_repl_js_start[];
+extern char _binary_lib_inspector_js_end[];
+extern char _binary_lib_inspector_js_start[];
+extern char _binary_lib_websocket_js_end[];
+extern char _binary_lib_websocket_js_start[];
+extern char _binary_lib_fs_js_end[];
+extern char _binary_lib_fs_js_start[];
+extern char _binary_just_js_end[];
+extern char _binary_just_js_start[];
+extern char _binary_lib_path_js_end[];
+extern char _binary_lib_path_js_start[];
+extern char _binary_lib_loop_js_end[];
+extern char _binary_lib_loop_js_start[];
+extern char _binary_lib_require_js_end[];
+extern char _binary_lib_require_js_start[];
+
 namespace just {
 namespace embedder {
 
@@ -22,9 +39,9 @@ int Start(int argc, char** argv) {
   int r = 0;
   r = pthread_sigmask(SIG_SETMASK, NULL, &set);
   if (r != 0) return r;
-  for (int i = 1; i < 64; i++) {
-    r = sigaddset(&set, i);
-    if (r != 0) return r;
+  int i = 1;
+  while (r == 0) {
+    r = sigaddset(&set, i++);
   }
   r = pthread_sigmask(SIG_SETMASK, &set, NULL);
   if (r != 0) return r;

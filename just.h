@@ -28,23 +28,6 @@
 #define JUST_MICROS_PER_SEC 1e6
 #define JUST_VERSION "0.0.1"
 
-extern char _binary_lib_repl_js_end[];
-extern char _binary_lib_repl_js_start[];
-extern char _binary_lib_inspector_js_end[];
-extern char _binary_lib_inspector_js_start[];
-extern char _binary_lib_websocket_js_end[];
-extern char _binary_lib_websocket_js_start[];
-extern char _binary_lib_fs_js_end[];
-extern char _binary_lib_fs_js_start[];
-extern char _binary_just_js_end[];
-extern char _binary_just_js_start[];
-extern char _binary_lib_path_js_end[];
-extern char _binary_lib_path_js_start[];
-extern char _binary_lib_loop_js_end[];
-extern char _binary_lib_loop_js_start[];
-extern char _binary_lib_require_js_end[];
-extern char _binary_lib_require_js_start[];
-
 namespace just {
 
 using v8::String;
@@ -2434,8 +2417,8 @@ void Spawn(const FunctionCallbackInfo<Value> &args) {
     ctx->argv[0] = (char*)calloc(1, name.length());
     memcpy(ctx->argv[0], *name, name.length());
   } else {
-    ctx->argv[0] = (char*)calloc(1, 6);
-    strncpy(ctx->argv[0], "thread", 6);
+    ctx->argv[0] = (char*)calloc(1, 7);
+    strncpy(ctx->argv[0], "thread", 7);
   }
   pthread_t tid;
 	int r = pthread_create(&tid, NULL, startThread, ctx);
