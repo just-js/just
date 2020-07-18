@@ -1,3 +1,6 @@
+*.tz
+*.gz
+*.7z
 just
 builtins.h
 .ccache

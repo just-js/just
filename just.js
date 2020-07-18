@@ -103,6 +103,12 @@ function runScript (script, name) {
   return just.vm.runScript(`(function() {\n${script}\n})()`, name)
 }
 
+function loadLibrary (path, name) {
+  const handle = just.sys.dlopen(path, just.sys.RTLD_NOW)
+  const ptr = just.sys.dlsym(handle, `_register_${name}`)
+  return just.sys.library(ptr)
+}
+
 function main () {
   const { fs, sys, net } = just
   ArrayBuffer.prototype.writeString = function(str, off = 0) { // eslint-disable-line
@@ -123,12 +129,13 @@ function main () {
   just.hrtime = wrapHrtime(sys.hrtime)
   just.env = wrapEnv(sys.env)
   just.requireCache = {}
-  just.require = just.requireNative = wrapRequireNative(just.requireCache).require
+  global.require = just.require = just.requireNative = wrapRequireNative(just.requireCache).require
   const requireModule = just.require('require')
   if (requireModule) {
-    just.require = requireModule.wrap(just.requireCache).require
+    global.require = just.require = requireModule.wrap(just.requireCache).require
   }
   just.heapUsage = wrapHeapUsage(sys.heapUsage)
+  just.library = loadLibrary
   just.path = just.require('path')
   const { factory, createLoop } = just.require('loop')
   just.factory = factory
@@ -164,6 +171,7 @@ function main () {
   }
   if (args[1] === '--') {
     // todo: limit size
+    // todo: allow streaming in multiple scripts with a separator and running them all
     const buf = new ArrayBuffer(4096)
     const chunks = []
     let bytes = net.read(sys.STDIN_FILENO, buf)

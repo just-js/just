@@ -21,12 +21,12 @@
 #include <sys/stat.h>
 #include <v8-inspector.h>
 #include <map>
-
-#define JUST_MAX_HEADERS 32
-#define JUST_MICROS_PER_SEC 1e6
-#define JUST_VERSION "0.0.1"
+#include <dlfcn.h>
 
 namespace just {
+
+#define JUST_MICROS_PER_SEC 1e6
+#define JUST_VERSION "0.0.1"
 
 using v8::String;
 using v8::NewStringType;
@@ -85,7 +85,7 @@ struct builtin {
   const char* source;
 };
 
-std::map<std::string, builtin*> builtins;
+static std::map<std::string, builtin*> builtins;
 
 void just_builtins_add(const char* name, const char* source, 
   unsigned int size) {
@@ -420,6 +420,9 @@ void Init(Isolate* isolate, Local<ObjectTemplate> target) {
 }
 
 namespace sys {
+
+typedef void *(*register_plugin)();
+using InitializerCallback = void (*)(Isolate* isolate, Local<ObjectTemplate> exports);
 
 void WaitPID(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
@@ -969,6 +972,49 @@ void AvailablePages(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(Integer::New(isolate, available_pages));
 }
 
+void DLOpen(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  String::Utf8Value path(isolate, args[0]);
+  int mode = args[1]->Int32Value(context).ToChecked();
+  void* handle = dlopen(*path, mode);
+  void* chunk = calloc(1, 8);
+  std::unique_ptr<BackingStore> out =
+      ArrayBuffer::NewBackingStore(chunk, 8, FreeMemory, nullptr);
+  Local<ArrayBuffer> outab = ArrayBuffer::New(isolate, std::move(out));
+  outab->SetAlignedPointerInInternalField(1, handle);
+  args.GetReturnValue().Set(outab);
+}
+
+void DLSym(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<ArrayBuffer> ab = args[0].As<ArrayBuffer>();
+  void* handle = ab->GetAlignedPointerFromInternalField(1);
+  String::Utf8Value name(isolate, args[1]);
+  void* ptr = dlsym(handle, *name);
+  void* chunk = calloc(1, 8);
+  std::unique_ptr<BackingStore> out =
+      ArrayBuffer::NewBackingStore(chunk, 8, FreeMemory, nullptr);
+  Local<ArrayBuffer> outab = ArrayBuffer::New(isolate, std::move(out));
+  outab->SetAlignedPointerInInternalField(1, ptr);
+  args.GetReturnValue().Set(outab);
+}
+
+void Library(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  Local<ArrayBuffer> ab = args[0].As<ArrayBuffer>();
+  void* ptr = ab->GetAlignedPointerFromInternalField(1);
+  register_plugin _init = reinterpret_cast<register_plugin>(ptr);
+  auto _register = reinterpret_cast<InitializerCallback>(_init());
+  Local<ObjectTemplate> exports = ObjectTemplate::New(isolate);
+  _register(isolate, exports);
+  args.GetReturnValue().Set(exports->NewInstance(context).ToLocalChecked());
+}
+
 void Init(Isolate* isolate, Local<ObjectTemplate> target) {
   Local<ObjectTemplate> sys = ObjectTemplate::New(isolate);
   SET_METHOD(isolate, sys, "calloc", Calloc);
@@ -977,6 +1023,9 @@ void Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, sys, "fcntl", Fcntl);
   SET_METHOD(isolate, sys, "memcpy", Memcpy);
   SET_METHOD(isolate, sys, "sleep", Sleep);
+  SET_METHOD(isolate, sys, "dlopen", DLOpen);
+  SET_METHOD(isolate, sys, "dlsym", DLSym);
+  SET_METHOD(isolate, sys, "library", Library);
   SET_METHOD(isolate, sys, "timer", Timer);
   SET_METHOD(isolate, sys, "memoryUsage", MemoryUsage);
   SET_METHOD(isolate, sys, "heapUsage", HeapSpaceUsage);
@@ -1011,7 +1060,9 @@ void Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, sys, "STDOUT_FILENO", Integer::New(isolate, 
     STDOUT_FILENO));
   SET_VALUE(isolate, sys, "STDERR_FILENO", Integer::New(isolate, 
-    STDERR_FILENO));
+    STDERR_FILENO));    
+  SET_VALUE(isolate, sys, "RTLD_LAZY", Integer::New(isolate, RTLD_LAZY));
+  SET_VALUE(isolate, sys, "RTLD_NOW", Integer::New(isolate, RTLD_NOW));
   SET_VALUE(isolate, sys, "SIGTERM", Integer::New(isolate, SIGTERM));
   SET_VALUE(isolate, sys, "SIGHUP", Integer::New(isolate, SIGHUP));
   SET_VALUE(isolate, sys, "SIGUSR1", Integer::New(isolate, SIGUSR1));
