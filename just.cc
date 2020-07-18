@@ -31,8 +31,10 @@ void InitModules(Isolate* isolate, Local<ObjectTemplate> just) {
   just_builtins_add("loop", _binary_lib_loop_js_start, _binary_lib_loop_js_end - _binary_lib_loop_js_start);
   just_builtins_add("require", _binary_lib_require_js_start, _binary_lib_require_js_end - _binary_lib_require_js_start);
 }
+}
+}
 
-int Start(int argc, char** argv) {
+int main(int argc, char** argv) {
   setvbuf(stdout, nullptr, _IONBF, 0);
   setvbuf(stderr, nullptr, _IONBF, 0);
   sigset_t set;
@@ -54,15 +56,9 @@ int Start(int argc, char** argv) {
   v8::V8::InitializePlatform(platform.get());
   v8::V8::Initialize();
   v8::V8::SetFlagsFromCommandLine(&argc, argv, true);
-  just::CreateIsolate(argc, argv, InitModules);
+  just::CreateIsolate(argc, argv, just::embedder::InitModules);
   v8::V8::Dispose();
   v8::V8::ShutdownPlatform();
   platform.reset();
   return 0;
-}
-}
-}
-
-int main(int argc, char** argv) {
-  return just::embedder::Start(argc, argv);
 }

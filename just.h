@@ -4,7 +4,6 @@
 #include <v8.h>
 #include <libplatform/libplatform.h>
 #include <unistd.h>
-#include <limits.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -16,7 +15,6 @@
 #include <sys/un.h>
 #include <netinet/tcp.h>
 #include <sys/utsname.h>
-#include <gnu/libc-version.h>
 #include <sys/signalfd.h>
 #include <signal.h>
 #include <dirent.h>
@@ -1640,8 +1638,6 @@ void Init(Isolate* isolate, Local<ObjectTemplate> target) {
     JUST_VERSION));
   SET_VALUE(isolate, versions, "v8", String::NewFromUtf8(isolate, 
     v8::V8::GetVersion()).ToLocalChecked());
-  SET_VALUE(isolate, versions, "glibc", String::NewFromUtf8(isolate, 
-    gnu_get_libc_version()).ToLocalChecked());
   Local<ObjectTemplate> kernel = ObjectTemplate::New(isolate);
   utsname kernel_rec;
   int rc = uname(&kernel_rec);
