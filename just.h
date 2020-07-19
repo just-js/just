@@ -178,7 +178,7 @@ Local<String> ReadFile(Isolate *isolate, const char *name) {
   fseek(file, 0, SEEK_END);
   size_t size = ftell(file);
   rewind(file);
-  char chars[size + 1];
+  char* chars = (char*)calloc(1, size + 1);
   chars[size] = '\0';
   for (size_t i = 0; i < size;) {
     i += fread(&chars[i], 1, size - i, file);
@@ -451,7 +451,8 @@ void Spawn(const FunctionCallbackInfo<Value> &args) {
   fds[1] = args[4]->IntegerValue(context).ToChecked();
   fds[2] = args[5]->IntegerValue(context).ToChecked();
   int len = arguments->Length();
-  char* argv[len + 2];
+  char** argv = (char**)calloc(len + 2, sizeof(char*));
+  //char* argv[len + 2];
   int written = 0;
   argv[0] = (char*)calloc(1, filePath.length());
   memcpy(argv[0], *filePath, filePath.length());
@@ -1040,6 +1041,7 @@ void Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, sys, "cwd", Cwd);
   SET_METHOD(isolate, sys, "env", Env);
   SET_METHOD(isolate, sys, "spawn", Spawn);
+  SET_METHOD(isolate, sys, "waitpid", WaitPID);
   SET_METHOD(isolate, sys, "runMicroTasks", RunMicroTasks);
   SET_METHOD(isolate, sys, "nextTick", EnqueueMicrotask);
   SET_METHOD(isolate, sys, "exit", Exit);
@@ -2116,7 +2118,7 @@ class InspectorClient : public V8InspectorClient {
       callback_name).ToLocalChecked();
     if (callback->IsFunction()) {
       v8::TryCatch try_catch(isolate_);
-      Local<Value> args[] = {};
+      Local<Value> args[1] = {Integer::New(isolate_, 0)};
       Local<Function>::Cast(callback)->Call(context, Undefined(isolate_), 0, 
         args).ToLocalChecked();
     }
@@ -2130,7 +2132,7 @@ class InspectorClient : public V8InspectorClient {
       callback_name).ToLocalChecked();
     if (callback->IsFunction()) {
       v8::TryCatch try_catch(isolate_);
-      Local<Value> args[] = {};
+      Local<Value> args[1] = {Integer::New(isolate_, 0)};
       Local<Function>::Cast(callback)->Call(context, Undefined(isolate_), 0, 
         args).ToLocalChecked();
     }
@@ -2749,7 +2751,7 @@ int CreateIsolate(int argc, char** argv, InitModulesCallback InitModules,
         NewStringType::kNormal)).ToLocalChecked();
     if (func->IsFunction()) {
       Local<Function> onExit = Local<Function>::Cast(func);
-      Local<Value> argv[0] = { };
+      Local<Value> argv[1] = {Integer::New(isolate, 0)};
       MaybeLocal<Value> result = onExit->Call(context, globalInstance, 0, argv);
       if (!result.IsEmpty()) {
         statusCode = result.ToLocalChecked()->Uint32Value(context).ToChecked();
