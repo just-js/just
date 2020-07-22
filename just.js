@@ -31,10 +31,15 @@ function wrapMemoryUsage (memoryUsage) {
   }
 }
 
+function split (str, sym) {
+  const at = str.indexOf(sym)
+  return [str.slice(0, at), str.slice(at + 1)]
+}
+
 function wrapEnv (env) {
   return () => {
     return env()
-      .map(entry => entry.split('='))
+      .map(entry => split(entry, '='))
       .reduce((e, pair) => { e[pair[0]] = pair[1]; return e }, {})
   }
 }

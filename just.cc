@@ -932,6 +932,48 @@ void just::sys::Library(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(exports->NewInstance(context).ToLocalChecked());
 }
 
+void just::sys::MMap(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  int argc = args.Length();
+  int fd = args[0]->Int32Value(context).ToChecked();
+  int len = args[1]->Int32Value(context).ToChecked();
+  int prot = PROT_READ | PROT_WRITE;
+  int flags = MAP_SHARED;
+  size_t offset = 0;
+  if (argc > 2) {
+    prot = args[2]->Int32Value(context).ToChecked();
+  }
+  if (argc > 3) {
+    flags = args[3]->Int32Value(context).ToChecked();
+  }
+  if (argc > 4) {
+    offset = args[4]->Int32Value(context).ToChecked();
+  }
+  void* data = mmap(0, len, prot, flags, fd, offset);
+  if (data == MAP_FAILED) {
+    return;
+  }
+  std::unique_ptr<BackingStore> backing =
+      SharedArrayBuffer::NewBackingStore(data, len, 
+        FreeMemory, nullptr);
+  Local<SharedArrayBuffer> ab =
+      SharedArrayBuffer::New(isolate, std::move(backing));
+  args.GetReturnValue().Set(ab);
+}
+
+void just::sys::MUnmap(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  Local<SharedArrayBuffer> ab = args[0].As<SharedArrayBuffer>();
+  std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
+  int len = args[1]->Int32Value(context).ToChecked();
+  int r = munmap(backing->Data(), len);
+  args.GetReturnValue().Set(Integer::New(isolate, r));
+}
+
 void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   Local<ObjectTemplate> sys = ObjectTemplate::New(isolate);
   SET_METHOD(isolate, sys, "calloc", Calloc);
@@ -965,6 +1007,8 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, sys, "usleep", USleep);
   SET_METHOD(isolate, sys, "pages", AvailablePages);
   SET_METHOD(isolate, sys, "nanosleep", NanoSleep);
+  SET_METHOD(isolate, sys, "mmap", MMap);
+  SET_METHOD(isolate, sys, "munmap", MUnmap);
   SET_VALUE(isolate, sys, "CLOCK_MONOTONIC", Integer::New(isolate, 
     CLOCK_MONOTONIC));
   SET_VALUE(isolate, sys, "TFD_NONBLOCK", Integer::New(isolate, 
@@ -980,6 +1024,10 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, sys, "STDERR_FILENO", Integer::New(isolate, 
     STDERR_FILENO));    
   SET_VALUE(isolate, sys, "RTLD_LAZY", Integer::New(isolate, RTLD_LAZY));
+  SET_VALUE(isolate, sys, "PROT_READ", Integer::New(isolate, PROT_READ));
+  SET_VALUE(isolate, sys, "PROT_WRITE", Integer::New(isolate, PROT_WRITE));
+  SET_VALUE(isolate, sys, "MAP_SHARED", Integer::New(isolate, MAP_SHARED));
+  SET_VALUE(isolate, sys, "MAP_ANONYMOUS", Integer::New(isolate, MAP_ANONYMOUS));
   SET_VALUE(isolate, sys, "RTLD_NOW", Integer::New(isolate, RTLD_NOW));
   SET_VALUE(isolate, sys, "SIGTERM", Integer::New(isolate, SIGTERM));
   SET_VALUE(isolate, sys, "SIGHUP", Integer::New(isolate, SIGHUP));

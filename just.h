@@ -22,6 +22,7 @@
 #include <v8-inspector.h>
 #include <map>
 #include <dlfcn.h>
+#include <sys/mman.h>
 
 namespace just {
 
@@ -148,6 +149,8 @@ void AvailablePages(const FunctionCallbackInfo<Value> &args);
 void DLOpen(const FunctionCallbackInfo<Value> &args);
 void DLSym(const FunctionCallbackInfo<Value> &args);
 void Library(const FunctionCallbackInfo<Value> &args);
+void MMap(const FunctionCallbackInfo<Value> &args);
+void MUnmap(const FunctionCallbackInfo<Value> &args);
 void Init(Isolate* isolate, Local<ObjectTemplate> target);
 }
 
