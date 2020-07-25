@@ -343,7 +343,8 @@ void just::sys::WaitPID(const FunctionCallbackInfo<Value> &args) {
   if (args.Length() > 1) {
     pid = args[0]->IntegerValue(context).ToChecked();
   }
-  fields[1] = waitpid(pid, &fields[0], WNOHANG); 
+  fields[1] = waitpid(pid, &fields[0], WNOHANG);
+  fields[0] = WEXITSTATUS(fields[0]); 
   args.GetReturnValue().Set(args[0]);
 }
 
@@ -881,56 +882,97 @@ void just::sys::AvailablePages(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(Integer::New(isolate, available_pages));
 }
 
+void just::sys::ReadMemory(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<BigInt> start64 = Local<BigInt>::Cast(args[0]);
+  Local<BigInt> end64 = Local<BigInt>::Cast(args[1]);
+  //Local<ArrayBuffer> ab = args[2].As<ArrayBuffer>();
+  //std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
+  const uint64_t size = end64->Uint64Value() - start64->Uint64Value();
+  void* start = reinterpret_cast<void*>(start64->Uint64Value());
+  std::unique_ptr<BackingStore> backing =
+      ArrayBuffer::NewBackingStore(start, size, 
+        FreeMemory, nullptr);
+  Local<ArrayBuffer> ab =
+      ArrayBuffer::New(isolate, std::move(backing));
+  args.GetReturnValue().Set(ab);
+}
+
+#ifdef SHARED
 void just::sys::DLOpen(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
-  String::Utf8Value path(isolate, args[0]);
-  int mode = args[1]->Int32Value(context).ToChecked();
-  void* handle = dlopen(*path, mode);
+  int argc = args.Length();
+  int mode = RTLD_NOW;
+  void* handle;
+  if (argc > 1) {
+    mode = args[1]->Int32Value(context).ToChecked();
+  }
+  if (argc > 0) {
+    String::Utf8Value path(isolate, args[0]);
+    handle = dlopen(*path, mode);
+    if (handle == NULL) handle = dlopen(NULL, mode);
+  } else {
+    handle = dlopen(NULL, mode);
+  }
   if (handle == NULL) {
     args.GetReturnValue().Set(v8::Null(isolate));
     return;
   }
-  void* chunk = calloc(1, 8);
-  std::unique_ptr<BackingStore> out =
-      ArrayBuffer::NewBackingStore(chunk, 8, FreeMemory, nullptr);
-  Local<ArrayBuffer> outab = ArrayBuffer::New(isolate, std::move(out));
-  outab->SetAlignedPointerInInternalField(1, handle);
-  args.GetReturnValue().Set(outab);
+  args.GetReturnValue().Set(BigInt::New(isolate, (uint64_t)handle));
 }
 
 void just::sys::DLSym(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
-  Local<ArrayBuffer> ab = args[0].As<ArrayBuffer>();
-  void* handle = ab->GetAlignedPointerFromInternalField(1);
+  Local<BigInt> address64 = Local<BigInt>::Cast(args[0]);
+  // todo: this is very dangerous. need to have a think on how best to do this
+  void* handle = reinterpret_cast<void*>(address64->Uint64Value());
   String::Utf8Value name(isolate, args[1]);
   void* ptr = dlsym(handle, *name);
   if (ptr == NULL) {
     args.GetReturnValue().Set(v8::Null(isolate));
     return;
   }
-  void* chunk = calloc(1, 8);
-  std::unique_ptr<BackingStore> out =
-      ArrayBuffer::NewBackingStore(chunk, 8, FreeMemory, nullptr);
-  Local<ArrayBuffer> outab = ArrayBuffer::New(isolate, std::move(out));
-  outab->SetAlignedPointerInInternalField(1, ptr);
-  args.GetReturnValue().Set(outab);
+  args.GetReturnValue().Set(BigInt::New(isolate, (uint64_t)ptr));
+}
+
+void just::sys::DLError(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  char* err = dlerror();
+  if (err == NULL) {
+    args.GetReturnValue().Set(v8::Null(isolate));
+    return;
+  }
+  args.GetReturnValue().Set(String::NewFromUtf8(isolate, err, 
+    NewStringType::kNormal).ToLocalChecked());
+}
+
+void just::sys::DLClose(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<BigInt> address64 = Local<BigInt>::Cast(args[0]);
+  void* handle = reinterpret_cast<void*>(address64->Uint64Value());
+  int r = dlclose(handle);
+  args.GetReturnValue().Set(Integer::New(isolate, r));
 }
 
 void just::sys::Library(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
-  Local<ArrayBuffer> ab = args[0].As<ArrayBuffer>();
-  void* ptr = ab->GetAlignedPointerFromInternalField(1);
+  Local<BigInt> address64 = Local<BigInt>::Cast(args[0]);
+  void* ptr = reinterpret_cast<void*>(address64->Uint64Value());
   register_plugin _init = reinterpret_cast<register_plugin>(ptr);
   auto _register = reinterpret_cast<InitializerCallback>(_init());
   Local<ObjectTemplate> exports = ObjectTemplate::New(isolate);
   _register(isolate, exports);
   args.GetReturnValue().Set(exports->NewInstance(context).ToLocalChecked());
 }
+#endif
 
 void just::sys::MMap(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
@@ -982,9 +1024,14 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, sys, "fcntl", Fcntl);
   SET_METHOD(isolate, sys, "memcpy", Memcpy);
   SET_METHOD(isolate, sys, "sleep", Sleep);
+  SET_METHOD(isolate, sys, "readMemory", ReadMemory);
+#ifdef SHARED
   SET_METHOD(isolate, sys, "dlopen", DLOpen);
   SET_METHOD(isolate, sys, "dlsym", DLSym);
+  SET_METHOD(isolate, sys, "dlerror", DLError);
+  SET_METHOD(isolate, sys, "dlclose", DLClose);
   SET_METHOD(isolate, sys, "library", Library);
+#endif
   SET_METHOD(isolate, sys, "timer", Timer);
   SET_METHOD(isolate, sys, "memoryUsage", MemoryUsage);
   SET_METHOD(isolate, sys, "heapUsage", HeapSpaceUsage);
@@ -1272,9 +1319,9 @@ void just::net::Write(const FunctionCallbackInfo<Value> &args) {
   if (argc > 3) {
     off = args[3]->Int32Value(context).ToChecked();
   }
-  char* dest = (char*)backing->Data() + off;
+  char* buf = (char*)backing->Data() + off;
   args.GetReturnValue().Set(Integer::New(isolate, write(fd, 
-    dest, len)));
+    buf, len)));
 }
 
 void just::net::Writev(const FunctionCallbackInfo<Value> &args) {
@@ -1620,6 +1667,41 @@ void just::fs::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, fs, "DT_REG", Integer::New(isolate, DT_REG));
   SET_VALUE(isolate, fs, "DT_SOCK", Integer::New(isolate, DT_SOCK));
   SET_VALUE(isolate, fs, "DT_UNKNOWN", Integer::New(isolate, DT_UNKNOWN));
+
+  SET_VALUE(isolate, fs, "EPERM", Integer::New(isolate, EPERM));
+  SET_VALUE(isolate, fs, "ENOENT", Integer::New(isolate, ENOENT));
+  SET_VALUE(isolate, fs, "ESRCH", Integer::New(isolate, ESRCH));
+  SET_VALUE(isolate, fs, "EINTR", Integer::New(isolate, EINTR));
+  SET_VALUE(isolate, fs, "EIO", Integer::New(isolate, EIO));
+  SET_VALUE(isolate, fs, "ENXIO", Integer::New(isolate, ENXIO));
+  SET_VALUE(isolate, fs, "E2BIG", Integer::New(isolate, E2BIG));
+  SET_VALUE(isolate, fs, "ENOEXEC", Integer::New(isolate, ENOEXEC));
+  SET_VALUE(isolate, fs, "EBADF", Integer::New(isolate, EBADF));
+  SET_VALUE(isolate, fs, "ECHILD", Integer::New(isolate, ECHILD));
+  SET_VALUE(isolate, fs, "EAGAIN", Integer::New(isolate, EAGAIN));
+  SET_VALUE(isolate, fs, "ENOMEM", Integer::New(isolate, ENOMEM));
+  SET_VALUE(isolate, fs, "EACCES", Integer::New(isolate, EACCES));
+  SET_VALUE(isolate, fs, "EFAULT", Integer::New(isolate, EFAULT));
+  SET_VALUE(isolate, fs, "ENOTBLK", Integer::New(isolate, ENOTBLK));
+  SET_VALUE(isolate, fs, "EBUSY", Integer::New(isolate, EBUSY));
+  SET_VALUE(isolate, fs, "EEXIST", Integer::New(isolate, EEXIST));
+  SET_VALUE(isolate, fs, "EXDEV", Integer::New(isolate, EXDEV));
+  SET_VALUE(isolate, fs, "ENODEV", Integer::New(isolate, ENODEV));
+  SET_VALUE(isolate, fs, "ENOTDIR", Integer::New(isolate, ENOTDIR));
+  SET_VALUE(isolate, fs, "EISDIR", Integer::New(isolate, EISDIR));
+  SET_VALUE(isolate, fs, "EINVAL", Integer::New(isolate, EINVAL));
+  SET_VALUE(isolate, fs, "ENFILE", Integer::New(isolate, ENFILE));
+  //SET_VALUE(isolate, fs, "ENFILE", Integer::New(isolate, ENFILE));
+  SET_VALUE(isolate, fs, "ENOTTY", Integer::New(isolate, ENOTTY));
+  SET_VALUE(isolate, fs, "ETXTBSY", Integer::New(isolate, ETXTBSY));
+  SET_VALUE(isolate, fs, "EFBIG", Integer::New(isolate, EFBIG));
+  SET_VALUE(isolate, fs, "ENOSPC", Integer::New(isolate, ENOSPC));
+  SET_VALUE(isolate, fs, "ESPIPE", Integer::New(isolate, ESPIPE));
+  SET_VALUE(isolate, fs, "EROFS", Integer::New(isolate, EROFS));
+  SET_VALUE(isolate, fs, "EMLINK", Integer::New(isolate, EMLINK));
+  SET_VALUE(isolate, fs, "EPIPE", Integer::New(isolate, EPIPE));
+  SET_VALUE(isolate, fs, "EDOM", Integer::New(isolate, EDOM));
+  SET_VALUE(isolate, fs, "ERANGE", Integer::New(isolate, ERANGE));
 
   SET_VALUE(isolate, fs, "S_IFMT", Integer::New(isolate, S_IFMT));
   SET_VALUE(isolate, fs, "S_IFSOCK", Integer::New(isolate, S_IFSOCK));
@@ -2100,29 +2182,50 @@ void* just::thread::startThread(void *data) {
 void just::thread::Spawn(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
-  String::Utf8Value source(isolate, args[0]);
   Local<Context> context = isolate->GetCurrentContext();
+  int argc = args.Length();
+  // get source code to execute in thread
+  String::Utf8Value source(isolate, args[0]);
   threadContext* ctx = (threadContext*)calloc(1, sizeof(threadContext));
-  ctx->argc = 1;
-  ctx->argv = new char*[2];
-  ctx->argv[1] = NULL;
 	ctx->source = (char*)calloc(1, source.length());
   memcpy(ctx->source, *source, source.length());
   ctx->source_len = source.length();
-  int argc = args.Length();
   ctx->buf.iov_len = 0;
   ctx->fd = 0;
+  // we can pass in a set of args for just.args
   if (argc > 1) {
-    Local<SharedArrayBuffer> ab = args[1].As<SharedArrayBuffer>();
+    Local<Array> arguments = args[1].As<Array>();
+    int len = arguments->Length();
+    ctx->argc = len;
+    ctx->argv = (char**)calloc(len + 1, sizeof(char*));
+    int written = 0;
+    for (int i = 0; i < len; i++) {
+      Local<String> val = 
+        arguments->Get(context, i).ToLocalChecked().As<v8::String>();
+      ctx->argv[i] = (char*)calloc(1, val->Length());
+      val->WriteUtf8(isolate, ctx->argv[i], val->Length(), &written, 
+        v8::String::HINT_MANY_WRITES_EXPECTED | v8::String::NO_NULL_TERMINATION);
+    }
+    ctx->argv[len] = NULL;
+  } else {
+    ctx->argc = 1;
+    ctx->argv = new char*[2];
+    ctx->argv[1] = NULL;
+  }
+  // shared array buffer. will be in just.buffer variable inside thread
+  if (argc > 2) {
+    Local<SharedArrayBuffer> ab = args[2].As<SharedArrayBuffer>();
     std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
     ctx->buf.iov_base = backing->Data();
     ctx->buf.iov_len = backing->ByteLength();
   }
-  if (argc > 2) {
-    ctx->fd = args[2]->Int32Value(context).ToChecked();
-  }
+  // socketpair fd for IPC
   if (argc > 3) {
-    String::Utf8Value name(isolate, args[3]);
+    ctx->fd = args[3]->Int32Value(context).ToChecked();
+  }
+  // overwrite arg[0] with thread name or passed in name for thread
+  if (argc > 4) {
+    String::Utf8Value name(isolate, args[4]);
     ctx->argv[0] = (char*)calloc(1, name.length());
     memcpy(ctx->argv[0], *name, name.length());
   } else {

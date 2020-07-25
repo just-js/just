@@ -142,7 +142,7 @@ function main () {
     global.require = just.require = requireModule.wrap(just.requireCache).require
   }
   just.heapUsage = wrapHeapUsage(sys.heapUsage)
-  just.library = loadLibrary
+  if (just.sys.dlopen) just.library = loadLibrary
   just.path = just.require('path')
   const { factory, createLoop } = just.require('loop')
   just.factory = factory
@@ -171,8 +171,15 @@ function main () {
     factory.run()
     return
   }
-  if (args[1] === '-e') {
+  if (args[1] === 'eval') {
     runScript(args[2], 'eval')
+    factory.run()
+    return
+  }
+  if (args[1] === 'build') {
+    const buildModule = just.require('build')
+    if (!buildModule) throw new Error('build not enabled')
+    buildModule.build()
     factory.run()
     return
   }

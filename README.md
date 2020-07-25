@@ -58,6 +58,11 @@ make runtime
 - module system
 - docker builds
 
+## Todo
+- remove all throws in lib/*.js
+- add shm operation - https://gist.github.com/garcia556/8231e844a90457c99cc72e5add8388e4
+- add file operations
+
 ## Line Count
 ```
 total files : 10

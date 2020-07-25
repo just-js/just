@@ -146,9 +146,14 @@ void Cwd(const FunctionCallbackInfo<Value> &args);
 void Env(const FunctionCallbackInfo<Value> &args);
 void Timer(const FunctionCallbackInfo<Value> &args);
 void AvailablePages(const FunctionCallbackInfo<Value> &args);
+void ReadMemory(const FunctionCallbackInfo<Value> &args);
+#ifdef SHARED
 void DLOpen(const FunctionCallbackInfo<Value> &args);
 void DLSym(const FunctionCallbackInfo<Value> &args);
+void DLClose(const FunctionCallbackInfo<Value> &args);
+void DLError(const FunctionCallbackInfo<Value> &args);
 void Library(const FunctionCallbackInfo<Value> &args);
+#endif
 void MMap(const FunctionCallbackInfo<Value> &args);
 void MUnmap(const FunctionCallbackInfo<Value> &args);
 void Init(Isolate* isolate, Local<ObjectTemplate> target);

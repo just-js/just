@@ -1,4 +1,7 @@
 #include "just.h"
+#ifdef ZLIB
+#include "../modules/zlib/zlib.h"
+#endif
 
 extern char _binary_lib_repl_js_end[];
 extern char _binary_lib_repl_js_start[];
@@ -16,12 +19,19 @@ extern char _binary_lib_loop_js_end[];
 extern char _binary_lib_loop_js_start[];
 extern char _binary_lib_require_js_end[];
 extern char _binary_lib_require_js_start[];
+#ifdef BUILDER
+extern char _binary_lib_build_js_end[];
+extern char _binary_lib_build_js_start[];
+#endif
 
 namespace just {
 namespace embedder {
 
 void InitModules(Isolate* isolate, Local<ObjectTemplate> just) {
   just::InitModules(isolate, just);
+#ifdef ZLIB
+  just::zlib::Init(isolate, just);
+#endif
   just_builtins_add("repl", _binary_lib_repl_js_start, _binary_lib_repl_js_end - _binary_lib_repl_js_start);
   just_builtins_add("inspector", _binary_lib_inspector_js_start, _binary_lib_inspector_js_end - _binary_lib_inspector_js_start);
   just_builtins_add("websocket", _binary_lib_websocket_js_start, _binary_lib_websocket_js_end - _binary_lib_websocket_js_start);
@@ -30,6 +40,9 @@ void InitModules(Isolate* isolate, Local<ObjectTemplate> just) {
   just_builtins_add("path", _binary_lib_path_js_start, _binary_lib_path_js_end - _binary_lib_path_js_start);
   just_builtins_add("loop", _binary_lib_loop_js_start, _binary_lib_loop_js_end - _binary_lib_loop_js_start);
   just_builtins_add("require", _binary_lib_require_js_start, _binary_lib_require_js_end - _binary_lib_require_js_start);
+#ifdef BUILDER
+  just_builtins_add("build", _binary_lib_build_js_start, _binary_lib_build_js_end - _binary_lib_build_js_start);
+#endif
 }
 }
 }
