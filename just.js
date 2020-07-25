@@ -179,7 +179,12 @@ function main () {
   if (args[1] === 'build') {
     const buildModule = just.require('build')
     if (!buildModule) throw new Error('build not enabled')
-    buildModule.build()
+    buildModule.build({}, (err, process) => {
+      if (err) return just.error(err.stack)
+      const { pid, status } = process
+      if (pid < 0) throw new Error(`bad PID ${pid}`)
+      if (status !== 0) throw new Error(`bad status ${status}`)
+    })
     factory.run()
     return
   }

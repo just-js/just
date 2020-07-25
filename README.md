@@ -39,9 +39,30 @@ A very small v8 javascript runtime for linux only
 - curl (to download dependencies)
 
 ## Build
+
+### Runtime Only
 ```
 make runtime
 ```
+- basic runtime for running external scripts
+
+## build builder runtime
+```
+JUST_HOME=$(pwd) make runtime-builder
+```
+- this runtime enables self building and packaging
+
+## self build with builder runtime
+```
+JUST_HOME=$(pwd)/.just just build runtime-builder
+```
+- binary will be in .just directory under current directory by default 
+
+## self build to a target directory with builder runtime
+```
+JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-builder
+```
+- binary will be in foo directory under current directory
 
 ## Summary
 - 14 MB binary

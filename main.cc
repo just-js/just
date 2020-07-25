@@ -1,6 +1,6 @@
 #include "just.h"
 #ifdef ZLIB
-#include "../modules/zlib/zlib.h"
+#include <zlib.h>
 #endif
 
 extern char _binary_lib_repl_js_end[];
