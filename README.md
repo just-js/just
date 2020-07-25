@@ -65,19 +65,21 @@ make runtime
 
 ## Line Count
 ```
-total files : 10
-total code lines : 3781
-total comment lines : 97
-total blank lines : 288
+total files : 12
+total code lines : 4424
+total comment lines : 118
+total blank lines : 313
 
-just.cc, code is 63, comment is 0, blank is 5.
-just.h, code is 2500, comment is 53, blank is 214.
-just.js, code is 184, comment is 4, blank is 11.
-lib/fs.js, code is 129, comment is 4, blank is 9.
+just.cc, code is 2360, comment is 59, blank is 152.
+just.h, code is 469, comment is 5, blank is 66.
+just.js, code is 203, comment is 5, blank is 13.
+lib/build.js, code is 254, comment is 9, blank is 17.
+lib/fs.js, code is 160, comment is 4, blank is 12.
 lib/inspector.js, code is 310, comment is 11, blank is 20.
 lib/loop.js, code is 79, comment is 1, blank is 2.
 lib/path.js, code is 104, comment is 1, blank is 7.
 lib/repl.js, code is 90, comment is 20, blank is 6.
 lib/require.js, code is 32, comment is 0, blank is 4.
 lib/websocket.js, code is 290, comment is 3, blank is 10.
+main.cc, code is 73, comment is 0, blank is 4.
 ```
