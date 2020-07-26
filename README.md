@@ -58,6 +58,11 @@ JUST_HOME=$(pwd)/.just just build runtime-builder
 ```
 - binary will be in .just directory under current directory by default 
 
+## Issues
+
+- move issues to github issues
+- openssl with static build - how to solve?
+
 ## self build to a target directory with builder runtime
 ```
 JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-builder
@@ -83,6 +88,7 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - remove all throws in lib/*.js
 - add shm operation - https://gist.github.com/garcia556/8231e844a90457c99cc72e5add8388e4
 - add file operations
+- add getaddrinfo - not in static build
 
 ## Line Count
 ```
