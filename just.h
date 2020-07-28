@@ -519,6 +519,7 @@ void* startThread(void *data);
 
 void Spawn(const FunctionCallbackInfo<Value> &args);
 void Join(const FunctionCallbackInfo<Value> &args);
+void TryJoin(const FunctionCallbackInfo<Value> &args);
 void Self(const FunctionCallbackInfo<Value> &args);
 void Init(Isolate* isolate, Local<ObjectTemplate> target, 
   InitModulesCallback InitModules);

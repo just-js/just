@@ -2258,6 +2258,20 @@ void just::thread::Join(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(BigInt::New(isolate, (long)tret));
 }
 
+void just::thread::TryJoin(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  Local<BigInt> bi = args[0]->ToBigInt(context).ToLocalChecked();
+  Local<Array> answer = args[1].As<Array>();
+  bool lossless = true;
+  pthread_t tid = (pthread_t)bi->Uint64Value(&lossless);
+  void* tret;
+  int r = pthread_tryjoin_np(tid, &tret);
+  answer->Set(context, 1, Integer::New(isolate, (long)tret)).Check();
+  args.GetReturnValue().Set(BigInt::New(isolate, r));
+}
+
 void just::thread::Self(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -2271,6 +2285,7 @@ void just::thread::Init(Isolate* isolate, Local<ObjectTemplate> target,
   initModules = InitModules;
   SET_METHOD(isolate, module, "spawn", Spawn);
   SET_METHOD(isolate, module, "join", Join);
+  SET_METHOD(isolate, module, "tryJoin", TryJoin);
   SET_METHOD(isolate, module, "self", Self);
   SET_MODULE(isolate, target, "thread", module);
 }
