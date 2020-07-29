@@ -193,6 +193,7 @@ void Open(const FunctionCallbackInfo<Value> &args);
 void Ioctl(const FunctionCallbackInfo<Value> &args);
 void Fstat(const FunctionCallbackInfo<Value> &args);
 void Rmdir(const FunctionCallbackInfo<Value> &args);
+void Rename(const FunctionCallbackInfo<Value> &args);
 void Mkdir(const FunctionCallbackInfo<Value> &args);
 void Readdir(const FunctionCallbackInfo<Value> &args);
 void Init(Isolate* isolate, Local<ObjectTemplate> target);

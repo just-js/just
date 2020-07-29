@@ -1569,6 +1569,14 @@ void just::fs::Rmdir(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(Integer::New(isolate, rc));
 }
 
+void just::fs::Rename(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  String::Utf8Value source(isolate, args[0]);
+  String::Utf8Value dest(isolate, args[1]);
+  args.GetReturnValue().Set(Integer::New(isolate, rename(*source, *dest)));
+}
+
 void just::fs::Mkdir(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -1632,6 +1640,7 @@ void just::fs::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, fs, "unlink", just::fs::Unlink);
   SET_METHOD(isolate, fs, "ioctl", just::fs::Ioctl);
   SET_METHOD(isolate, fs, "rmdir", just::fs::Rmdir);
+  SET_METHOD(isolate, fs, "rename", just::fs::Rename);
   SET_METHOD(isolate, fs, "mkdir", just::fs::Mkdir);
   SET_METHOD(isolate, fs, "fstat", just::fs::Fstat);
   SET_METHOD(isolate, fs, "readdir", just::fs::Readdir);
