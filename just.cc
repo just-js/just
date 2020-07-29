@@ -1936,8 +1936,13 @@ void just::encode::HexEncode(const FunctionCallbackInfo<Value> &args) {
   if (args.Length() > 2) {
     len = args[2]->Uint32Value(context).ToChecked();
   }
+  int off = 0;
+  if (args.Length() > 3) {
+    off = args[3]->Uint32Value(context).ToChecked();
+  }
+  char* dst = (char*)dest->Data() + off;
   size_t bytes = hex_encode((const char*)source->Data(), len, 
-    (char*)dest->Data(), dest->ByteLength());
+    dst, dest->ByteLength() - off);
   args.GetReturnValue().Set(Integer::New(isolate, bytes));
 }
 
