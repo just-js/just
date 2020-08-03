@@ -23,6 +23,7 @@
 #include <map>
 #include <dlfcn.h>
 #include <sys/mman.h>
+//#include <x86intrin.h>
 
 namespace just {
 
@@ -117,6 +118,7 @@ namespace sys {
 typedef void *(*register_plugin)();
 using InitializerCallback = void (*)(Isolate* isolate, Local<ObjectTemplate> exports);
 
+//void FindFast(const FunctionCallbackInfo<Value> &args);
 void WaitPID(const FunctionCallbackInfo<Value> &args);
 void Spawn(const FunctionCallbackInfo<Value> &args);
 void HRTime(const FunctionCallbackInfo<Value> &args);
