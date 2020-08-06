@@ -1155,6 +1155,19 @@ void just::net::SetSockOpt(const FunctionCallbackInfo<Value> &args) {
     option, &value, sizeof(int))));
 }
 
+void just::net::GetSockOpt(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  int fd = args[0]->Int32Value(context).ToChecked();
+  int level = args[1]->Int32Value(context).ToChecked();
+  int option = args[2]->Int32Value(context).ToChecked();
+  int error = 0;
+  socklen_t errlen = sizeof(error);
+  int r = getsockopt(fd, level, option, &error, &errlen);
+  args.GetReturnValue().Set(Integer::New(isolate, error));
+}
+
 void just::net::GetSockName(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -1418,6 +1431,7 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   Local<ObjectTemplate> net = ObjectTemplate::New(isolate);
   SET_METHOD(isolate, net, "socket", Socket);
   SET_METHOD(isolate, net, "setsockopt", SetSockOpt);
+  SET_METHOD(isolate, net, "getsockopt", GetSockOpt);
   SET_METHOD(isolate, net, "listen", Listen);
   SET_METHOD(isolate, net, "connect", Connect);
   SET_METHOD(isolate, net, "socketpair", SocketPair);
@@ -1439,6 +1453,7 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, net, "SOCK_NONBLOCK", Integer::New(isolate, 
     SOCK_NONBLOCK));
   SET_VALUE(isolate, net, "SOL_SOCKET", Integer::New(isolate, SOL_SOCKET));
+  SET_VALUE(isolate, net, "SO_ERROR", Integer::New(isolate, SO_ERROR));
   SET_VALUE(isolate, net, "SO_REUSEADDR", Integer::New(isolate, SO_REUSEADDR));
   SET_VALUE(isolate, net, "SO_REUSEPORT", Integer::New(isolate, SO_REUSEPORT));
   SET_VALUE(isolate, net, "SO_INCOMING_CPU", Integer::New(isolate, 

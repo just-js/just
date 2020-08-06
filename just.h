@@ -164,6 +164,7 @@ void Init(Isolate* isolate, Local<ObjectTemplate> target);
 namespace net {
 void Socket(const FunctionCallbackInfo<Value> &args);
 void SetSockOpt(const FunctionCallbackInfo<Value> &args);
+void GetSockOpt(const FunctionCallbackInfo<Value> &args);
 void GetSockName(const FunctionCallbackInfo<Value> &args);
 void GetPeerName(const FunctionCallbackInfo<Value> &args);
 void Listen(const FunctionCallbackInfo<Value> &args);
