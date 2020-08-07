@@ -110,3 +110,9 @@ lib/require.js, code is 32, comment is 0, blank is 4.
 lib/websocket.js, code is 290, comment is 3, blank is 10.
 main.cc, code is 73, comment is 0, blank is 4.
 ```
+
+## book
+
+A(J)PLE.js
+
+Advanced (Javascript) Programming in the Linux Environment
