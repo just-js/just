@@ -116,3 +116,44 @@ main.cc, code is 73, comment is 0, blank is 4.
 A(J)PLE.js
 
 Advanced (Javascript) Programming in the Linux Environment
+
+## utf8
+
+```bash
+> x = ArrayBuffer.fromString('フレー')
+{}
+> x.byteLength
+9
+> u8 = new Uint8Array(x)
+{
+  "0": 227,
+  "1": 131,
+  "2": 149,
+  "3": 227,
+  "4": 131,
+  "5": 172,
+  "6": 227,
+  "7": 131,
+  "8": 188
+}
+> y = x.readString(x.byteLength)
+"フレー"
+> y.length
+3
+> b = new ArrayBuffer(x.byteLength)
+{}
+> b.writeString(y)
+9
+> u8 = new Uint8Array(b)
+{
+  "0": 227,
+  "1": 131,
+  "2": 149,
+  "3": 227,
+  "4": 131,
+  "5": 172,
+  "6": 227,
+  "7": 131,
+  "8": 188
+}
+```

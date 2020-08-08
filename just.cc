@@ -778,7 +778,7 @@ void just::sys::Calloc(const FunctionCallbackInfo<Value> &args) {
   void* chunk;
   if (args[1]->IsString()) {
     Local<String> str = args[1].As<String>();
-    size = str->Length();
+    size = str->Utf8Length(isolate);
     chunk = calloc(count, size);
     int written;
     str->WriteUtf8(isolate, (char*)chunk, size, &written, 
@@ -833,7 +833,7 @@ void just::sys::WriteString(const FunctionCallbackInfo<Value> &args) {
   HandleScope handleScope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
   Local<ArrayBuffer> ab = args[0].As<ArrayBuffer>();
-  String::Utf8Value str(isolate, args[1]);
+  Local<String> str = args[1].As<String>();
   int off = 0;
   if (args.Length() > 2) {
     off = args[2]->Int32Value(context).ToChecked();
@@ -841,10 +841,10 @@ void just::sys::WriteString(const FunctionCallbackInfo<Value> &args) {
   std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
   char *data = static_cast<char *>(backing->Data());
   char* source = data + off;
-  int len = str.length();
-  // TODO: check overflow
-  memcpy(source, *str, len);
-  args.GetReturnValue().Set(Integer::New(isolate, len));
+  int len = str->Utf8Length(isolate);
+  int nchars = 0;
+  int written = str->WriteUtf8(isolate, source, len, &nchars, 0);
+  args.GetReturnValue().Set(Integer::New(isolate, written));
 }
 
 void just::sys::Fcntl(const FunctionCallbackInfo<Value> &args) {
