@@ -116,6 +116,19 @@ function loadLibrary (path, name) {
   return just.sys.library(ptr)
 }
 
+function byteLength (str) {
+  const len = str.length
+  let s = len
+  let code = 0
+  let i = 0
+  while (i < len) {
+    code = str.charCodeAt(i++)
+    if (code > 0x7f && code <= 0x7ff) s++
+    else if (code > 0x7ff && code <= 0xffff) s += 2
+  }
+  return s
+}
+
 function main () {
   const { fs, sys, net } = just
   ArrayBuffer.prototype.writeString = function(str, off = 0) { // eslint-disable-line
@@ -128,6 +141,8 @@ function main () {
     return sys.memcpy(this, ab, off, len, off2)
   }
   ArrayBuffer.fromString = str => sys.calloc(1, str)
+  String.byteLength = byteLength
+
   just.setTimeout = setTimeout
   just.setInterval = setInterval
   just.clearTimeout = just.clearInterval = clearTimeout
