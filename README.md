@@ -70,10 +70,9 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - binary will be in foo directory under current directory
 
 ## Summary
-- 14 MB binary
-- 15MB RSS
-- Single C++ header file
-- less than 4k loc
+- 15 MB static binary, 17 MB dynamic
+- 8MB startup RSS for static binary, 12 MB for dynamic
+- less than 5k loc
 - builds in 4 seconds
 
 ## Roadmap
@@ -88,7 +87,8 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - remove all throws in lib/*.js
 - add shm operation - https://gist.github.com/garcia556/8231e844a90457c99cc72e5add8388e4
 - add file operations
-- add getaddrinfo - not in static build
+- add getaddrinfo - not in static build.. ugh! no...
+- for static builds, have an option to disallow any external requires. only builtins allowed
 
 ## Line Count
 ```
@@ -140,6 +140,8 @@ Advanced (Javascript) Programming in the Linux Environment
 "フレー"
 > y.length
 3
+> String.byteLength(y)
+9
 > b = new ArrayBuffer(x.byteLength)
 {}
 > b.writeString(y)
