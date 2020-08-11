@@ -12,6 +12,7 @@ A very small v8 javascript runtime for linux only
 - as close to native performance as possible
 - modules can be dynamically loaded shared libaries or can be statically compiled into runtime
 - secure by default
+- avoid abstraction as much as possible. abstractions can be built in userspace
 - be able to write busybox in js using this
 - don't necessarily care about browser compatibility, but a compatibility layer could be added in userland
 - don't necessarily care about all ES features, but a compatibility layer could be added in userland
@@ -20,10 +21,10 @@ A very small v8 javascript runtime for linux only
 - event loop in JS-land. full control over epoll api
 - small standard library - leave as much to userland as possible. focus on primitives needed to build higher level abstractions
 - useful as a teaching/learning platform for linux system programming and learning more about javascript and v8 internals
-- small number of files - keep everything in one header file if possible
+- small number of files - keep everything in one header/source file if possible
 - keep LOC as small as possible < 5k
 - allocate as little as possible on v8 heap
-- resource lifetime is responsibility of the caller
+- resource lifetime is responsibility of the caller ?? what do i mean here?
 - blessed modules live in modules repo
   - must adhere to guidelines
   - must have tests
