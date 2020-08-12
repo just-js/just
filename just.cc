@@ -1399,11 +1399,16 @@ void just::net::Send(const FunctionCallbackInfo<Value> &args) {
   if (argc > 2) {
     len = args[2]->Int32Value(context).ToChecked();
   }
-  int flags = MSG_NOSIGNAL;
+  int off = 0;
   if (argc > 3) {
-    flags = args[3]->Int32Value(context).ToChecked();
+    off = args[3]->Int32Value(context).ToChecked();
   }
-  int r = send(fd, backing->Data(), len, flags);
+  int flags = MSG_NOSIGNAL;
+  if (argc > 4) {
+    flags = args[4]->Int32Value(context).ToChecked();
+  }
+  char* out = (char*)backing->Data() + off;
+  int r = send(fd, out, len, flags);
   args.GetReturnValue().Set(Integer::New(isolate, r));
 }
 
