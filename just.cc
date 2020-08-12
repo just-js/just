@@ -491,6 +491,7 @@ void just::sys::CPUUsage(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
   struct rusage usage;
+  // todo: can use RUSAGE_THREAD to get thread (self) usage
   getrusage(RUSAGE_SELF, &usage);
   Local<Float64Array> array = args[0].As<Float64Array>();
   Local<ArrayBuffer> ab = array->Buffer();
