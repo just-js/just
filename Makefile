@@ -33,34 +33,34 @@ deps: ## download v8 lib and headers
 runtime: builtins deps ## build dynamic runtime
 	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
 	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -o just
+	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
 
 runtime-builder: builtins-build deps ## build builder runtime
 	JUST_HOME=$(JUST_HOME) make -C modules/zlib/ deps zlib.a
-	$(CC) -c -DSHARED -DBUILDER -DZLIB -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c -DSHARED -DBUILDER -DZLIB -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group modules/zlib/zlib.a deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -o just
+	$(CC) -c -DSHARED -DBUILDER -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
+	$(CC) -c -DSHARED -DBUILDER -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
+	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group modules/zlib/zlib.a deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
 
 runtime-builder-deps: builtins-build-deps deps ## build builder with dependencies embedded in the binary
 	JUST_HOME=$(JUST_HOME) make -C modules/zlib/ deps zlib.a
-	$(CC) -c -DSHARED -DBUILDER -DZLIB -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c -DSHARED -DBUILDER -DZLIB -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group modules/zlib/zlib.a deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -o just
+	$(CC) -c -DSHARED -DBUILDER -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
+	$(CC) -c -DSHARED -DBUILDER -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
+	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group modules/zlib/zlib.a deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
 
 runtime-debug: builtins deps ## build debug version of runtime
 	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
 	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -o just
+	$(CC) -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
 
 runtime-static: builtins deps ## build static version of runtime
 	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
 	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -s -static -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -o just
+	$(CC) -s -static -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
 
 runtime-debug-static: builtins deps ## build static debug version of runtime
 	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
 	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -static -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -o just
+	$(CC) -static -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
 
 clean: ## tidy up
 	rm -f *.o

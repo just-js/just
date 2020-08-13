@@ -158,6 +158,8 @@ void Library(const FunctionCallbackInfo<Value> &args);
 #endif
 void MMap(const FunctionCallbackInfo<Value> &args);
 void MUnmap(const FunctionCallbackInfo<Value> &args);
+void ShmOpen(const FunctionCallbackInfo<Value> &args);
+void ShmUnlink(const FunctionCallbackInfo<Value> &args);
 void Init(Isolate* isolate, Local<ObjectTemplate> target);
 }
 
@@ -195,6 +197,7 @@ void Unlink(const FunctionCallbackInfo<Value> &args);
 void Open(const FunctionCallbackInfo<Value> &args);
 void Ioctl(const FunctionCallbackInfo<Value> &args);
 void Fstat(const FunctionCallbackInfo<Value> &args);
+void Ftruncate(const FunctionCallbackInfo<Value> &args);
 void Rmdir(const FunctionCallbackInfo<Value> &args);
 void Rename(const FunctionCallbackInfo<Value> &args);
 void Mkdir(const FunctionCallbackInfo<Value> &args);

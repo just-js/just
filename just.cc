@@ -1017,6 +1017,30 @@ void just::sys::Library(const FunctionCallbackInfo<Value> &args) {
 }
 #endif
 
+void just::sys::ShmOpen(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  String::Utf8Value name(isolate, args[0]);
+  int argc = args.Length();
+  int flags = O_RDONLY;
+  if (argc > 1) {
+    flags = args[1]->Int32Value(context).ToChecked();
+  }
+  int mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+  if (argc > 2) {
+    mode = args[2]->Int32Value(context).ToChecked();
+  }
+  args.GetReturnValue().Set(Integer::New(isolate, shm_open(*name, flags, mode)));
+}
+
+void just::sys::ShmUnlink(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  String::Utf8Value name(isolate, args[0]);
+  args.GetReturnValue().Set(Integer::New(isolate, shm_unlink(*name)));
+}
+
 void just::sys::MMap(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -1100,6 +1124,8 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, sys, "nanosleep", NanoSleep);
   SET_METHOD(isolate, sys, "mmap", MMap);
   SET_METHOD(isolate, sys, "munmap", MUnmap);
+  SET_METHOD(isolate, sys, "shmOpen", ShmOpen);
+  SET_METHOD(isolate, sys, "shmUnlink", ShmUnlink);  
   SET_VALUE(isolate, sys, "CLOCK_MONOTONIC", Integer::New(isolate, 
     CLOCK_MONOTONIC));
   SET_VALUE(isolate, sys, "TFD_NONBLOCK", Integer::New(isolate, 
@@ -1590,6 +1616,15 @@ void just::fs::Ioctl(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(Integer::New(isolate, ioctl(fd, flags)));
 }
 
+void just::fs::Ftruncate(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  int fd = args[0]->Int32Value(context).ToChecked();
+  off_t length = args[1]->Uint32Value(context).ToChecked();
+  args.GetReturnValue().Set(Integer::New(isolate, ftruncate(fd, length)));
+}
+
 void just::fs::Fstat(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -1704,6 +1739,7 @@ void just::fs::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, fs, "unlink", just::fs::Unlink);
   SET_METHOD(isolate, fs, "ioctl", just::fs::Ioctl);
   SET_METHOD(isolate, fs, "rmdir", just::fs::Rmdir);
+  SET_METHOD(isolate, fs, "ftruncate", just::fs::Ftruncate);
   SET_METHOD(isolate, fs, "rename", just::fs::Rename);
   SET_METHOD(isolate, fs, "mkdir", just::fs::Mkdir);
   SET_METHOD(isolate, fs, "fstat", just::fs::Fstat);
