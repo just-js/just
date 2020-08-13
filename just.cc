@@ -3,6 +3,76 @@
 just::inspector::InspectorClient* client;
 static just::InitModulesCallback initModules;
 
+// from here: https://raw.githubusercontent.com/fho/code_snippets/master/c/getusage.c
+
+struct pstat {
+    long unsigned int utime_ticks;
+    long int cutime_ticks;
+    long unsigned int stime_ticks;
+    long int cstime_ticks;
+    long unsigned int vsize; // virtual memory size in bytes
+    long unsigned int rss; //Resident  Set  Size in bytes
+    long unsigned int cpu_total_time;
+};
+
+/*
+ * read /proc data into the passed struct pstat
+ * returns 0 on success, -1 on error
+*/
+int get_usage(const pid_t pid, struct pstat* result) {
+    //convert  pid to string
+    char pid_s[20];
+    snprintf(pid_s, sizeof(pid_s), "%d", pid);
+    char stat_filepath[30] = "/proc/"; strncat(stat_filepath, pid_s,
+            sizeof(stat_filepath) - strlen(stat_filepath) -1);
+    strncat(stat_filepath, "/stat", sizeof(stat_filepath) -
+            strlen(stat_filepath) -1);
+
+    FILE *fpstat = fopen(stat_filepath, "r");
+    if (fpstat == NULL) {
+        perror("FOPEN ERROR ");
+        return -1;
+    }
+
+    FILE *fstat = fopen("/proc/stat", "r");
+    if (fstat == NULL) {
+        perror("FOPEN ERROR ");
+        fclose(fstat);
+        return -1;
+    }
+
+    //read values from /proc/pid/stat
+    bzero(result, sizeof(struct pstat));
+    long int rss;
+    if (fscanf(fpstat, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %lu"
+                "%lu %ld %ld %*d %*d %*d %*d %*u %lu %ld",
+                &result->utime_ticks, &result->stime_ticks,
+                &result->cutime_ticks, &result->cstime_ticks, &result->vsize,
+                &rss) == EOF) {
+        fclose(fpstat);
+        return -1;
+    }
+    fclose(fpstat);
+    result->rss = rss * getpagesize();
+
+    //read+calc cpu total time from /proc/stat
+    long unsigned int cpu_time[10];
+    bzero(cpu_time, sizeof(cpu_time));
+    if (fscanf(fstat, "%*s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
+                &cpu_time[0], &cpu_time[1], &cpu_time[2], &cpu_time[3],
+                &cpu_time[4], &cpu_time[5], &cpu_time[6], &cpu_time[7],
+                &cpu_time[8], &cpu_time[9]) == EOF) {
+        fclose(fstat);
+        return -1;
+    }
+
+    fclose(fstat);
+
+    for(int i=0; i < 10;i++)
+        result->cpu_total_time += cpu_time[i];
+
+    return 0;
+}
 
 void just::just_builtins_add(const char* name, const char* source, 
   unsigned int size) {
@@ -486,8 +556,26 @@ void just::sys::Kill(const FunctionCallbackInfo<Value>& args) {
 https://github.com/nodejs/node/blob/4438852aa16689b841e5ffbca4a24fc36a0fe33c/src/node_os.cc#L101
 https://github.com/libuv/libuv/blob/c70dd705bc2adc488ddffcdc12f0c610d116e77b/src/unix/linux-core.c#L610
 */
-
 void just::sys::CPUUsage(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  struct tms stat;
+  clock_t c = times(&stat);
+  args.GetReturnValue().Set(Integer::New(isolate, c));
+  if (c == -1) {
+    return;
+  }
+  Local<Uint32Array> b32 = args[0].As<Uint32Array>();
+  Local<ArrayBuffer> ab = b32->Buffer();
+  std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
+  uint32_t *fields = static_cast<uint32_t *>(backing->Data());
+  fields[0] = stat.tms_utime;
+  fields[1] = stat.tms_stime;
+  fields[2] = stat.tms_cutime;
+  fields[3] = stat.tms_cstime;
+}
+
+void just::sys::GetrUsage(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
   struct rusage usage;
@@ -1110,6 +1198,7 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, sys, "errno", Errno);
   SET_METHOD(isolate, sys, "strerror", StrError);
   SET_METHOD(isolate, sys, "cpuUsage", CPUUsage);
+  SET_METHOD(isolate, sys, "getrUsage", GetrUsage);
   SET_METHOD(isolate, sys, "hrtime", HRTime);
   SET_METHOD(isolate, sys, "cwd", Cwd);
   SET_METHOD(isolate, sys, "env", Env);

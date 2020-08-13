@@ -6,11 +6,50 @@ function wrapHrtime (hrtime) {
   }
 }
 
+function truncate (val) {
+  return Math.floor(val * 100) / 100
+}
+
 function wrapCpuUsage (cpuUsage) {
-  const cpu = new Float64Array(16)
+  const cpu = new Uint32Array(4)
+  const result = { user: 0, system: 0 }
+  const clock = cpuUsage(cpu)
+  const last = { user: cpu[0], system: cpu[1], clock }
   return () => {
-    cpuUsage(cpu)
-    return { user: cpu[0], system: cpu[1] }
+    const clock = cpuUsage(cpu)
+    const elapsed = clock - last.clock
+    result.user = truncate((cpu[0] - last.user) / elapsed)
+    result.system = truncate((cpu[1] - last.system) / elapsed)
+    last.user = cpu[0]
+    last.system = cpu[1]
+    last.clock = clock
+    return result
+  }
+}
+
+function wrapgetrUsage (getrUsage) {
+  const res = new Float64Array(16)
+  return () => {
+    getrUsage(res)
+    // todo. create this object above
+    return {
+      user: res[0],
+      system: res[1],
+      maxrss: res[2],
+      ixrss: res[3],
+      idrss: res[4],
+      isrss: res[5],
+      minflt: res[6],
+      majflt: res[7],
+      nswap: res[8],
+      inblock: res[9],
+      oublock: res[10],
+      msgsnd: res[11],
+      msgrcv: res[12],
+      ssignals: res[13],
+      nvcsw: res[14],
+      nivcsw: res[15]
+    }
   }
 }
 
@@ -148,6 +187,7 @@ function main () {
   just.clearTimeout = just.clearInterval = clearTimeout
   just.memoryUsage = wrapMemoryUsage(sys.memoryUsage)
   just.cpuUsage = wrapCpuUsage(sys.cpuUsage)
+  just.rUsage = wrapgetrUsage(sys.getrUsage)
   just.hrtime = wrapHrtime(sys.hrtime)
   just.env = wrapEnv(sys.env)
   just.requireCache = {}

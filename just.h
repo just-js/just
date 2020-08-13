@@ -23,6 +23,7 @@
 #include <map>
 #include <dlfcn.h>
 #include <sys/mman.h>
+#include <sys/times.h>
 //#include <x86intrin.h>
 
 namespace just {
@@ -77,6 +78,7 @@ using v8::SharedArrayBuffer;
 using v8::PromiseRejectMessage;
 using v8::Promise;
 using v8::PromiseRejectEvent;
+using v8::Uint32Array;
 
 typedef void    (*InitModulesCallback) (Isolate*, Local<ObjectTemplate>);
 int CreateIsolate(int argc, char** argv, InitModulesCallback InitModules, 
@@ -126,6 +128,7 @@ void RunMicroTasks(const FunctionCallbackInfo<Value> &args);
 void EnqueueMicrotask(const FunctionCallbackInfo<Value>& args);
 void Exit(const FunctionCallbackInfo<Value>& args);
 void Kill(const FunctionCallbackInfo<Value>& args);
+void GetrUsage(const FunctionCallbackInfo<Value> &args);
 void CPUUsage(const FunctionCallbackInfo<Value> &args);
 void PID(const FunctionCallbackInfo<Value> &args);
 void Errno(const FunctionCallbackInfo<Value> &args);
