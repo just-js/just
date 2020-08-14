@@ -169,6 +169,11 @@ function byteLength (str) {
 }
 
 function main () {
+  delete global.console
+  delete global.FinalizationRegistry
+  delete global.Reflect
+  delete global.Proxy
+  delete global.globalThis
   const { fs, sys, net } = just
   ArrayBuffer.prototype.writeString = function(str, off = 0) { // eslint-disable-line
     return sys.writeString(this, str, off)
@@ -199,11 +204,10 @@ function main () {
   just.heapUsage = wrapHeapUsage(sys.heapUsage)
   if (just.sys.dlopen) just.library = loadLibrary
   just.path = just.require('path')
-  const { factory, createLoop } = just.require('loop')
+  const { factory } = just.require('loop')
   just.factory = factory
   const loop = factory.create(1024)
   just.factory.loop = loop
-  just.createLoop = createLoop
   let waitForInspector = false
   just.args = just.args.filter(arg => {
     const found = (arg === '--inspector')
