@@ -1427,6 +1427,24 @@ void just::net::Accept(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(Integer::New(isolate, accept(fd, NULL, NULL)));
 }
 
+void just::net::Seek(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  int fd = args[0]->Int32Value(context).ToChecked();
+  int argc = args.Length();
+  off_t off = 0;
+  if (argc > 1) {
+    off = args[1]->Int32Value(context).ToChecked();
+  }
+  int whence = SEEK_SET;
+  if (argc > 2) {
+    whence = args[2]->Int32Value(context).ToChecked();
+  }
+  off_t r = lseek(fd, off, whence);
+  args.GetReturnValue().Set(Integer::New(isolate, r));
+}
+
 void just::net::Read(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -1559,6 +1577,7 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, net, "bind", Bind);
   SET_METHOD(isolate, net, "accept", Accept);
   SET_METHOD(isolate, net, "read", Read);
+  SET_METHOD(isolate, net, "seek", Seek);
   SET_METHOD(isolate, net, "recv", Recv);
   SET_METHOD(isolate, net, "write", Write);
   SET_METHOD(isolate, net, "writev", Writev);
@@ -1587,6 +1606,9 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, net, "EAGAIN", Integer::New(isolate, EAGAIN));
   SET_VALUE(isolate, net, "EWOULDBLOCK", Integer::New(isolate, EWOULDBLOCK));
   SET_VALUE(isolate, net, "EINTR", Integer::New(isolate, EINTR));
+  SET_VALUE(isolate, net, "SEEK_SET", Integer::New(isolate, SEEK_SET));
+  SET_VALUE(isolate, net, "SEEK_CUR", Integer::New(isolate, SEEK_CUR));
+  SET_VALUE(isolate, net, "SEEK_END", Integer::New(isolate, SEEK_END));
   SET_MODULE(isolate, target, "net", net);
 }
 
