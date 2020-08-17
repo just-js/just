@@ -146,6 +146,7 @@ void Memcpy(const FunctionCallbackInfo<Value> &args);
 void Calloc(const FunctionCallbackInfo<Value> &args);
 void ReadString(const FunctionCallbackInfo<Value> &args);
 void WriteString(const FunctionCallbackInfo<Value> &args);
+void GetAddress(const FunctionCallbackInfo<Value> &args);
 void Fcntl(const FunctionCallbackInfo<Value> &args);
 void Cwd(const FunctionCallbackInfo<Value> &args);
 void Env(const FunctionCallbackInfo<Value> &args);

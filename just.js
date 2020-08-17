@@ -12,16 +12,20 @@ function truncate (val) {
 
 function wrapCpuUsage (cpuUsage) {
   const cpu = new Uint32Array(4)
-  const result = { user: 0, system: 0 }
+  const result = { user: 0, system: 0, cuser: 0, csystem: 0 }
   const clock = cpuUsage(cpu)
-  const last = { user: cpu[0], system: cpu[1], clock }
+  const last = { user: cpu[0], system: cpu[1], cuser: cpu[2], csystem: cpu[3], clock }
   return () => {
     const clock = cpuUsage(cpu)
     const elapsed = clock - last.clock
     result.user = truncate((cpu[0] - last.user) / elapsed)
     result.system = truncate((cpu[1] - last.system) / elapsed)
+    result.cuser = truncate((cpu[2] - last.cuser) / elapsed)
+    result.csystem = truncate((cpu[3] - last.csystem) / elapsed)
     last.user = cpu[0]
     last.system = cpu[1]
+    last.cuser = cpu[2]
+    last.csystem = cpu[3]
     last.clock = clock
     return result
   }
@@ -180,6 +184,9 @@ function main () {
   }
   ArrayBuffer.prototype.readString = function (len, off) { // eslint-disable-line
     return sys.readString(this, len, off)
+  }
+  ArrayBuffer.prototype.getAddress = function () { // eslint-disable-line
+    return sys.getAddress(this)
   }
   ArrayBuffer.prototype.copyFrom = function (ab, off, len, off2 = 0) { // eslint-disable-line
     return sys.memcpy(this, ab, off, len, off2)

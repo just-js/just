@@ -917,6 +917,15 @@ void just::sys::ReadString(const FunctionCallbackInfo<Value> &args) {
     NewStringType::kNormal, len).ToLocalChecked());
 }
 
+void just::sys::GetAddress(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<ArrayBuffer> ab = args[0].As<ArrayBuffer>();
+  std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
+  char *data = static_cast<char *>(backing->Data());
+  args.GetReturnValue().Set(BigInt::New(isolate, (uint64_t)data));
+}
+
 void just::sys::WriteString(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -1044,7 +1053,7 @@ void just::sys::DLOpen(const FunctionCallbackInfo<Value> &args) {
   if (argc > 0) {
     String::Utf8Value path(isolate, args[0]);
     handle = dlopen(*path, mode);
-    if (handle == NULL) handle = dlopen(NULL, mode);
+    //if (handle == NULL) handle = dlopen(NULL, mode);
   } else {
     handle = dlopen(NULL, mode);
   }
@@ -1177,6 +1186,7 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, sys, "calloc", Calloc);
   SET_METHOD(isolate, sys, "readString", ReadString);
   SET_METHOD(isolate, sys, "writeString", WriteString);
+  SET_METHOD(isolate, sys, "getAddress", GetAddress);
   SET_METHOD(isolate, sys, "fcntl", Fcntl);
   SET_METHOD(isolate, sys, "memcpy", Memcpy);
   SET_METHOD(isolate, sys, "sleep", Sleep);
