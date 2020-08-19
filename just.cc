@@ -453,7 +453,7 @@ void just::sys::WaitPID(const FunctionCallbackInfo<Value> &args) {
   int *fields = static_cast<int *>(backing->Data());
   int pid = -1;
   if (args.Length() > 1) {
-    pid = args[0]->IntegerValue(context).ToChecked();
+    pid = args[1]->IntegerValue(context).ToChecked();
   }
   fields[1] = waitpid(pid, &fields[0], WNOHANG);
   fields[0] = WEXITSTATUS(fields[0]); 
