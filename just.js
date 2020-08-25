@@ -174,10 +174,10 @@ function byteLength (str) {
 
 function main () {
   delete global.console
-  delete global.FinalizationRegistry
-  delete global.Reflect
-  delete global.Proxy
-  delete global.globalThis
+  //delete global.FinalizationRegistry
+  //delete global.Reflect
+  //delete global.Proxy
+  //delete global.globalThis
   const { fs, sys, net } = just
   ArrayBuffer.prototype.writeString = function(str, off = 0) { // eslint-disable-line
     return sys.writeString(this, str, off)
