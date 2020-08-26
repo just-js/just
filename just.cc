@@ -858,6 +858,13 @@ void just::sys::Memcpy(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(Integer::New(isolate, len));
 }
 
+void just::sys::Utf8Length(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<String> str = args[0].As<String>();
+  args.GetReturnValue().Set(Integer::New(isolate, str->Utf8Length(isolate)));
+}
+
 void just::sys::Calloc(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -941,7 +948,7 @@ void just::sys::WriteString(const FunctionCallbackInfo<Value> &args) {
   char* source = data + off;
   int len = str->Utf8Length(isolate);
   int nchars = 0;
-  int written = str->WriteUtf8(isolate, source, len, &nchars, 0);
+  int written = str->WriteUtf8(isolate, source, len, &nchars, v8::String::HINT_MANY_WRITES_EXPECTED | v8::String::NO_NULL_TERMINATION);
   args.GetReturnValue().Set(Integer::New(isolate, written));
 }
 
@@ -1190,6 +1197,7 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, sys, "fcntl", Fcntl);
   SET_METHOD(isolate, sys, "memcpy", Memcpy);
   SET_METHOD(isolate, sys, "sleep", Sleep);
+  SET_METHOD(isolate, sys, "utf8Length", Utf8Length);
   SET_METHOD(isolate, sys, "readMemory", ReadMemory);
 #ifdef SHARED
   SET_METHOD(isolate, sys, "dlopen", DLOpen);
@@ -1288,10 +1296,14 @@ void just::net::GetSockOpt(const FunctionCallbackInfo<Value> &args) {
   int fd = args[0]->Int32Value(context).ToChecked();
   int level = args[1]->Int32Value(context).ToChecked();
   int option = args[2]->Int32Value(context).ToChecked();
-  int error = 0;
-  socklen_t errlen = sizeof(error);
-  int r = getsockopt(fd, level, option, &error, &errlen);
-  args.GetReturnValue().Set(Integer::New(isolate, error));
+  int options = 0;
+  socklen_t optlen = sizeof(options);
+  int r = getsockopt(fd, level, option, &options, &optlen);
+  if (r == -1) {
+    args.GetReturnValue().Set(Integer::New(isolate, r));
+    return;
+  }
+  args.GetReturnValue().Set(Integer::New(isolate, options));
 }
 
 void just::net::GetSockName(const FunctionCallbackInfo<Value> &args) {

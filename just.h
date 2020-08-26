@@ -145,6 +145,7 @@ void FreeMemory(void* buf, size_t length, void* data);
 void Memcpy(const FunctionCallbackInfo<Value> &args);
 void Calloc(const FunctionCallbackInfo<Value> &args);
 void ReadString(const FunctionCallbackInfo<Value> &args);
+void Utf8Length(const FunctionCallbackInfo<Value> &args);
 void WriteString(const FunctionCallbackInfo<Value> &args);
 void GetAddress(const FunctionCallbackInfo<Value> &args);
 void Fcntl(const FunctionCallbackInfo<Value> &args);
