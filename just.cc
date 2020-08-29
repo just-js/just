@@ -1536,6 +1536,17 @@ void just::net::Write(const FunctionCallbackInfo<Value> &args) {
     buf, len)));
 }
 
+void just::net::WriteString(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  int fd = args[0]->Int32Value(context).ToChecked();
+  String::Utf8Value str(args.GetIsolate(), args[1]);
+  int len = str.length();
+  args.GetReturnValue().Set(Integer::New(isolate, write(fd, 
+    *str, len)));
+}
+
 void just::net::Writev(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -1566,6 +1577,22 @@ void just::net::Send(const FunctionCallbackInfo<Value> &args) {
   char* out = (char*)backing->Data() + off;
   int r = send(fd, out, len, flags);
   args.GetReturnValue().Set(Integer::New(isolate, r));
+}
+
+void just::net::SendString(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  int fd = args[0]->Int32Value(context).ToChecked();
+  String::Utf8Value str(args.GetIsolate(), args[1]);
+  int argc = args.Length();
+  int flags = MSG_NOSIGNAL;
+  if (argc > 2) {
+    flags = args[2]->Int32Value(context).ToChecked();
+  }
+  int len = str.length();
+  args.GetReturnValue().Set(Integer::New(isolate, send(fd, 
+    *str, len, flags)));
 }
 
 void just::net::Close(const FunctionCallbackInfo<Value> &args) {
@@ -1602,8 +1629,10 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, net, "seek", Seek);
   SET_METHOD(isolate, net, "recv", Recv);
   SET_METHOD(isolate, net, "write", Write);
+  SET_METHOD(isolate, net, "writeString", WriteString);
   SET_METHOD(isolate, net, "writev", Writev);
   SET_METHOD(isolate, net, "send", Send);
+  SET_METHOD(isolate, net, "sendString", SendString);
   SET_METHOD(isolate, net, "close", Close);
   SET_METHOD(isolate, net, "shutdown", Shutdown);
   SET_METHOD(isolate, net, "getsockname", GetSockName);
