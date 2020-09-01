@@ -1013,6 +1013,7 @@ void just::sys::ReadMemory(const FunctionCallbackInfo<Value> &args) {
   //std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
   const uint64_t size = end64->Uint64Value() - start64->Uint64Value();
   void* start = reinterpret_cast<void*>(start64->Uint64Value());
+  // TODO: is this correct? will it leak?
   std::unique_ptr<BackingStore> backing =
       ArrayBuffer::NewBackingStore(start, size, 
         FreeMemory, nullptr);
