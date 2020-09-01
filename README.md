@@ -92,6 +92,8 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - for static builds, have an option to disallow any external requires. only builtins allowed
 - heap snapshot api: https://github.com/bnoordhuis/node-heapdump/blob/master/src/heapdump.cc
 - latt at v8 isolate snapshot blob for startup
+- free memory in thread spawn on thread completion
+- test memory being freed in pg module
  
 ## Line Count
 ```

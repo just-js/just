@@ -252,6 +252,7 @@ v8::Local<v8::String> just::ReadFile(Isolate *isolate, const char *name) {
   fclose(file);
   Local<String> result = String::NewFromUtf8(isolate, chars, 
     NewStringType::kNormal, static_cast<int>(size)).ToLocalChecked();
+  free(chars);
   return result;
 }
 
@@ -402,48 +403,6 @@ void just::vm::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_MODULE(isolate, target, "vm", vm);
 }
 
-/*
-void just::sys::FindFast(const FunctionCallbackInfo<Value> &args) {
-  Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
-  Local<Context> context = isolate->GetCurrentContext();
-  Local<ArrayBuffer> buf = args[0].As<ArrayBuffer>();
-  std::shared_ptr<BackingStore> backing = buf->GetBackingStore();
-  Local<ArrayBuffer> rbuf = args[1].As<ArrayBuffer>();
-  std::shared_ptr<BackingStore> results = rbuf->GetBackingStore();
-  int argc = args.Length();
-  size_t bytes = backing->ByteLength();
-  if (argc > 2) {
-    bytes = args[2]->Int32Value(context).ToChecked();
-  }
-  size_t off = 0;
-  if (argc > 3) {
-    off = args[3]->Int32Value(context).ToChecked();
-  }
-  const char* next = (const char*)backing->Data() + off;
-  const char* needle = "\r\n\r\n";
-  uint32_t* offsets = (uint32_t*)results->Data();
-  int nlen = 4;
-  size_t end = bytes + off;
-  __m128i needle16 = _mm_loadu_si128((const __m128i *)needle);
-  int count = 0;
-  int orig = off;
-  int r = 0;
-  __m128i haystack16;
-  while (off < end) {
-    haystack16 = _mm_loadu_si128((const __m128i *)next);
-    r = _mm_cmpestri(needle16, nlen, haystack16, 16, _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
-    if (r < (16 - nlen)) {
-      offsets[count++] = r + off + nlen;
-    }
-    off += 16 - nlen;
-    next += 16 - nlen;
-  }
-  offsets[count] = orig + bytes;
-  args.GetReturnValue().Set(Integer::New(isolate, count));
-}
-*/
-
 void just::sys::WaitPID(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -489,6 +448,10 @@ void just::sys::Spawn(const FunctionCallbackInfo<Value> &args) {
   if (pid == -1) {
     perror("error forking");
     args.GetReturnValue().Set(Integer::New(isolate, pid));
+    for (int i = 0; i < len; i++) {
+      free(argv[i]);
+    }
+    free(argv);
     return;
   }
   if (pid == 0) {
@@ -500,12 +463,20 @@ void just::sys::Spawn(const FunctionCallbackInfo<Value> &args) {
     dup2(fds[2], 2);
     execvp(*filePath, argv);
     perror("error launching child process");
+    for (int i = 0; i < len; i++) {
+      free(argv[i]);
+    }
+    free(argv);
     exit(127);
   } else {
     close(fds[0]);
     close(fds[1]);
     close(fds[2]);
     args.GetReturnValue().Set(Integer::New(isolate, pid));
+    for (int i = 0; i < len; i++) {
+      free(argv[i]);
+    }
+    free(argv);
     return;
   }
 }
@@ -877,8 +848,12 @@ void just::sys::Calloc(const FunctionCallbackInfo<Value> &args) {
     size = str->Utf8Length(isolate);
     chunk = calloc(count, size);
     int written;
-    str->WriteUtf8(isolate, (char*)chunk, size, &written, 
-      String::HINT_MANY_WRITES_EXPECTED | String::NO_NULL_TERMINATION);
+    char* next = (char*)chunk;
+    for (uint32_t i = 0; i < count; i++) {
+      str->WriteUtf8(isolate, next, size, &written, 
+        String::HINT_MANY_WRITES_EXPECTED | String::NO_NULL_TERMINATION);
+      next += written;
+    }
   } else {
     size = args[1]->Uint32Value(context).ToChecked();
     chunk = calloc(count, size);
@@ -1189,7 +1164,6 @@ void just::sys::MUnmap(const FunctionCallbackInfo<Value> &args) {
 
 void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   Local<ObjectTemplate> sys = ObjectTemplate::New(isolate);
-  //SET_METHOD(isolate, sys, "findFast", FindFast);
   SET_METHOD(isolate, sys, "calloc", Calloc);
   SET_METHOD(isolate, sys, "readString", ReadString);
   SET_METHOD(isolate, sys, "writeString", WriteString);
@@ -2456,6 +2430,7 @@ void* just::thread::startThread(void *data) {
 }
 
 void just::thread::Spawn(const FunctionCallbackInfo<Value> &args) {
+  // TODO: we have to free all the allocated memory when the thread finishes
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
