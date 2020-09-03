@@ -29,7 +29,7 @@
 namespace just {
 
 #define JUST_MICROS_PER_SEC 1e6
-#define JUST_VERSION "0.0.1"
+#define JUST_VERSION "0.0.2"
 
 using v8::String;
 using v8::NewStringType;
@@ -536,6 +536,7 @@ void Spawn(const FunctionCallbackInfo<Value> &args);
 void Join(const FunctionCallbackInfo<Value> &args);
 void TryJoin(const FunctionCallbackInfo<Value> &args);
 void Self(const FunctionCallbackInfo<Value> &args);
+void SetAffinity(const FunctionCallbackInfo<Value> &args);
 void Init(Isolate* isolate, Local<ObjectTemplate> target, 
   InitModulesCallback InitModules);
 }

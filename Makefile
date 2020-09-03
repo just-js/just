@@ -1,5 +1,5 @@
 CC=g++
-RELEASE=0.0.1
+RELEASE=0.0.2
 
 .PHONY: help clean
 
@@ -10,7 +10,7 @@ zlib: ## install and compile the zlib modules, needed for builder runtime
 	rm -fr modules
 	curl -L -o modules.tar.gz https://github.com/just-js/modules/archive/$(RELEASE).tar.gz
 	tar -zxvf modules.tar.gz
-	mv modules-0.0.1 modules
+	mv modules-$(RELEASE) modules
 
 builtins-build-deps: zlib deps just.cc just.h Makefile main.cc just.js lib/*.js ## compile builtins with build dependencies
 	ld -r -b binary deps.tar.gz just.cc just.h just.js Makefile main.cc lib/websocket.js lib/inspector.js lib/loop.js lib/require.js lib/path.js lib/repl.js lib/fs.js lib/build.js -o builtins.o
