@@ -461,6 +461,7 @@ void just::sys::Spawn(const FunctionCallbackInfo<Value> &args) {
     dup2(fds[0], 0);
     dup2(fds[1], 1);
     dup2(fds[2], 2);
+    chdir(*cwd);
     execvp(*filePath, argv);
     perror("error launching child process");
     for (int i = 0; i < len; i++) {
