@@ -1,5 +1,5 @@
 CC=g++
-RELEASE=0.0.2
+RELEASE=0.0.3
 
 .PHONY: help clean
 

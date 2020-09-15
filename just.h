@@ -29,7 +29,7 @@
 namespace just {
 
 #define JUST_MICROS_PER_SEC 1e6
-#define JUST_VERSION "0.0.2"
+#define JUST_VERSION "0.0.3"
 
 using v8::String;
 using v8::NewStringType;
