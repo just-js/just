@@ -1365,6 +1365,20 @@ void just::net::SocketPair(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(Integer::New(isolate, r));
 }
 
+void just::net::Pipe(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  Local<Array> answer = args[0].As<Array>();
+  int fd[2];
+  int r = pipe(fd);
+  if (r == 0) {
+    answer->Set(context, 0, Integer::New(isolate, fd[0])).Check();
+    answer->Set(context, 1, Integer::New(isolate, fd[1])).Check();
+  }
+  args.GetReturnValue().Set(Integer::New(isolate, r));
+}
+
 void just::net::Connect(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -1599,6 +1613,7 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, net, "listen", Listen);
   SET_METHOD(isolate, net, "connect", Connect);
   SET_METHOD(isolate, net, "socketpair", SocketPair);
+  SET_METHOD(isolate, net, "pipe", Pipe);
   SET_METHOD(isolate, net, "bind", Bind);
   SET_METHOD(isolate, net, "accept", Accept);
   SET_METHOD(isolate, net, "read", Read);

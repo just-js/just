@@ -176,6 +176,7 @@ void GetSockName(const FunctionCallbackInfo<Value> &args);
 void GetPeerName(const FunctionCallbackInfo<Value> &args);
 void Listen(const FunctionCallbackInfo<Value> &args);
 void SocketPair(const FunctionCallbackInfo<Value> &args);
+void Pipe(const FunctionCallbackInfo<Value> &args);
 void Connect(const FunctionCallbackInfo<Value> &args);
 void Bind(const FunctionCallbackInfo<Value> &args);
 void Accept(const FunctionCallbackInfo<Value> &args);
