@@ -793,7 +793,8 @@ void just::sys::HeapSpaceUsage(const FunctionCallbackInfo<Value> &args) {
 }
 
 void just::sys::FreeMemory(void* buf, size_t length, void* data) {
-  //fprintf(stderr, "free: %lu\n", length);
+  free(buf);
+  free(data);
 }
 
 void just::sys::Memcpy(const FunctionCallbackInfo<Value> &args) {
