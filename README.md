@@ -109,22 +109,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 ## Line Count
 ```
 total files : 12
-total code lines : 4424
-total comment lines : 118
-total blank lines : 313
+total code lines : 4816
+total comment lines : 128
+total blank lines : 337
 
-just.cc, code is 2360, comment is 59, blank is 152.
-just.h, code is 469, comment is 5, blank is 66.
-just.js, code is 203, comment is 5, blank is 13.
-lib/build.js, code is 254, comment is 9, blank is 17.
-lib/fs.js, code is 160, comment is 4, blank is 12.
-lib/inspector.js, code is 310, comment is 11, blank is 20.
-lib/loop.js, code is 79, comment is 1, blank is 2.
+just.cc, code is 2653, comment is 71, blank is 175.
+just.h, code is 484, comment is 8, blank is 64.
+just.js, code is 253, comment is 7, blank is 15.
+lib/build.js, code is 261, comment is 1, blank is 16.
+lib/fs.js, code is 180, comment is 4, blank is 14.
+lib/inspector.js, code is 318, comment is 11, blank is 20.
+lib/loop.js, code is 80, comment is 2, blank is 2.
 lib/path.js, code is 104, comment is 1, blank is 7.
 lib/repl.js, code is 90, comment is 20, blank is 6.
 lib/require.js, code is 32, comment is 0, blank is 4.
 lib/websocket.js, code is 290, comment is 3, blank is 10.
-main.cc, code is 73, comment is 0, blank is 4.
+main.cc, code is 71, comment is 0, blank is 4.
 ```
 
 ## book
