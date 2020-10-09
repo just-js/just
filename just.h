@@ -24,6 +24,8 @@
 #include <dlfcn.h>
 #include <sys/mman.h>
 #include <sys/times.h>
+#include <limits.h>
+
 //#include <x86intrin.h>
 
 namespace just {
