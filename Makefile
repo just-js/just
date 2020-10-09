@@ -32,8 +32,8 @@ deps: ## download v8 lib and headers
 	rm -f deps/$(RELEASE).tar.gz
 
 runtime: builtins deps ## build dynamic runtime
-	$(CC) -c -DSHARED -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c -DSHARED -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
+	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
+	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
 	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
 
 runtime-builder: builtins-build deps modules/zlib/deps/zlib-1.2.11/libz.a ## build builder runtime
