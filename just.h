@@ -29,7 +29,7 @@
 namespace just {
 
 #define JUST_MICROS_PER_SEC 1e6
-#define JUST_VERSION "0.0.3"
+#define JUST_VERSION "0.0.4"
 
 using v8::String;
 using v8::NewStringType;
@@ -80,16 +80,19 @@ using v8::Promise;
 using v8::PromiseRejectEvent;
 using v8::Uint32Array;
 
-typedef void    (*InitModulesCallback) (Isolate*, Local<ObjectTemplate>);
-int CreateIsolate(int argc, char** argv, InitModulesCallback InitModules, 
-  const char* js, unsigned int js_len, struct iovec* buf, int fd);
-
 struct builtin {
   unsigned int size;
   const char* source;
 };
-
+// todo: why is this static?
 static std::map<std::string, builtin*> builtins;
+
+typedef void    (*InitModulesCallback) (Isolate*, Local<ObjectTemplate>);
+int CreateIsolate(int argc, char** argv, InitModulesCallback InitModules, 
+  const char* js, unsigned int js_len, struct iovec* buf, int fd);
+int CreateIsolate(int argc, char** argv, InitModulesCallback InitModules);
+void PromiseRejectCallback(PromiseRejectMessage message);
+void InitModules(Isolate* isolate, Local<ObjectTemplate> just);
 
 void just_builtins_add(const char* name, const char* source, 
   unsigned int size);
@@ -548,12 +551,6 @@ void RecvMsg(const FunctionCallbackInfo<Value> &args);
 void SendMsg(const FunctionCallbackInfo<Value> &args);
 void Init(Isolate* isolate, Local<ObjectTemplate> target);
 }
-
-void PromiseRejectCallback(PromiseRejectMessage message);
-void InitModules(Isolate* isolate, Local<ObjectTemplate> just);
-int CreateIsolate(int argc, char** argv, InitModulesCallback InitModules, 
-  const char* js, unsigned int js_len, struct iovec* buf, int fd);
-int CreateIsolate(int argc, char** argv, InitModulesCallback InitModules);
 
 }
 #endif
