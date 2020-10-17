@@ -461,7 +461,11 @@ void just::sys::Spawn(const FunctionCallbackInfo<Value> &args) {
     dup2(fds[0], 0);
     dup2(fds[1], 1);
     dup2(fds[2], 2);
-    chdir(*cwd);
+    int r = chdir(*cwd);
+    if (r < 0) {
+      fprintf(stderr, "error changing directory\n");
+      exit(127);
+    }
     execvp(*filePath, argv);
     perror("error launching child process");
     for (int i = 0; i < len; i++) {
@@ -793,8 +797,9 @@ void just::sys::HeapSpaceUsage(const FunctionCallbackInfo<Value> &args) {
 }
 
 void just::sys::FreeMemory(void* buf, size_t length, void* data) {
-  free(buf);
-  free(data);
+  fprintf(stderr, "free memory %lu. figure this out.", length);
+  //free(buf);
+  //free(data);
 }
 
 void just::sys::Memcpy(const FunctionCallbackInfo<Value> &args) {
