@@ -797,7 +797,7 @@ void just::sys::HeapSpaceUsage(const FunctionCallbackInfo<Value> &args) {
 }
 
 void just::sys::FreeMemory(void* buf, size_t length, void* data) {
-  fprintf(stderr, "free memory %lu. figure this out.", length);
+  fprintf(stderr, "free memory %lu. figure this out.\n", length);
   //free(buf);
   //free(data);
 }
@@ -914,6 +914,15 @@ void just::sys::GetAddress(const FunctionCallbackInfo<Value> &args) {
   char *data = static_cast<char *>(backing->Data());
   args.GetReturnValue().Set(BigInt::New(isolate, (uint64_t)data));
 }
+
+/*
+void just::sys::GetStringAddress(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<String> str = args[0].As<String>();
+  args.GetReturnValue().Set(BigInt::New(isolate, (uint64_t)*str));
+}
+*/
 
 void just::sys::WriteString(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
@@ -1176,6 +1185,7 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, sys, "readString", ReadString);
   SET_METHOD(isolate, sys, "writeString", WriteString);
   SET_METHOD(isolate, sys, "getAddress", GetAddress);
+  //SET_METHOD(isolate, sys, "getStringAddress", GetStringAddress);
   SET_METHOD(isolate, sys, "fcntl", Fcntl);
   SET_METHOD(isolate, sys, "memcpy", Memcpy);
   SET_METHOD(isolate, sys, "sleep", Sleep);
@@ -1238,6 +1248,11 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, sys, "SIGTERM", Integer::New(isolate, SIGTERM));
   SET_VALUE(isolate, sys, "SIGHUP", Integer::New(isolate, SIGHUP));
   SET_VALUE(isolate, sys, "SIGUSR1", Integer::New(isolate, SIGUSR1));
+
+  SET_VALUE(isolate, sys, "BYTE_ORDER", Integer::New(isolate, __BYTE_ORDER));
+  SET_VALUE(isolate, sys, "LITTLE_ENDIAN", Integer::New(isolate, __LITTLE_ENDIAN));
+  SET_VALUE(isolate, sys, "BIG_ENDIAN", Integer::New(isolate, __BIG_ENDIAN));
+
   long cpus = sysconf(_SC_NPROCESSORS_ONLN);
   long physical_pages = sysconf(_SC_PHYS_PAGES);
   long page_size = sysconf(_SC_PAGESIZE);
@@ -1256,7 +1271,11 @@ void just::net::Socket(const FunctionCallbackInfo<Value> &args) {
   Local<Context> context = isolate->GetCurrentContext();
   int domain = args[0]->Int32Value(context).ToChecked();
   int type = args[1]->Int32Value(context).ToChecked();
-  args.GetReturnValue().Set(Integer::New(isolate, socket(domain, type, 0)));
+  int protocol = 0;
+  if (args.Length() > 2) {
+    protocol = args[2]->Int32Value(context).ToChecked();
+  }
+  args.GetReturnValue().Set(Integer::New(isolate, socket(domain, type, protocol)));
 }
 
 void just::net::SetSockOpt(const FunctionCallbackInfo<Value> &args) {
@@ -1434,6 +1453,43 @@ void just::net::Bind(const FunctionCallbackInfo<Value> &args) {
     strncpy(server_addr.sun_path, *path, sizeof(server_addr.sun_path));
     r = bind(fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr));
   }
+  args.GetReturnValue().Set(Integer::New(isolate, r));
+}
+
+void just::net::BindInterface(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();
+  int fd = args[0]->Int32Value(context).ToChecked();
+  String::Utf8Value name(isolate, args[1]);
+  int argc = args.Length();
+  int family = AF_PACKET;
+  if (argc > 2) {
+    family = args[2]->Int32Value(context).ToChecked();
+  }
+  int protocol = htons(ETH_P_ALL);
+  if (argc > 3) {
+    protocol = args[3]->Int32Value(context).ToChecked();
+  }
+  int packetType = 0;
+  if (argc > 4) {
+    packetType = args[4]->Int32Value(context).ToChecked();
+  }
+  struct ifreq ifr;
+  memset(&ifr,0,sizeof(ifr));
+  strncpy(ifr.ifr_name, *name, sizeof(ifr.ifr_name));
+  int r = ioctl(fd, SIOCGIFINDEX, &ifr);
+  if (r < 0) {
+    args.GetReturnValue().Set(Integer::New(isolate, r));
+    return;
+  }
+  int ifidx = ifr.ifr_ifindex;
+  struct sockaddr_ll addr;
+  addr.sll_family = family;
+  addr.sll_protocol = protocol;
+  addr.sll_ifindex = ifidx;
+  addr.sll_pkttype = packetType;
+  r = bind(fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_ll));
   args.GetReturnValue().Set(Integer::New(isolate, r));
 }
 
@@ -1621,6 +1677,7 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, net, "socketpair", SocketPair);
   SET_METHOD(isolate, net, "pipe", Pipe);
   SET_METHOD(isolate, net, "bind", Bind);
+  SET_METHOD(isolate, net, "bindInterface", BindInterface);
   SET_METHOD(isolate, net, "accept", Accept);
   SET_METHOD(isolate, net, "read", Read);
   SET_METHOD(isolate, net, "seek", Seek);
@@ -1634,12 +1691,47 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, net, "shutdown", Shutdown);
   SET_METHOD(isolate, net, "getsockname", GetSockName);
   SET_METHOD(isolate, net, "getpeername", GetPeerName);
+
   SET_VALUE(isolate, net, "AF_INET", Integer::New(isolate, AF_INET));
   SET_VALUE(isolate, net, "AF_UNIX", Integer::New(isolate, AF_UNIX));
+
+  // Address Families - bits/socket.h
+  SET_VALUE(isolate, net, "AF_INET6", Integer::New(isolate, AF_INET6));
+  SET_VALUE(isolate, net, "AF_NETLINK", Integer::New(isolate, AF_NETLINK));
+  SET_VALUE(isolate, net, "AF_PACKET", Integer::New(isolate, AF_PACKET));
+  SET_VALUE(isolate, net, "AF_RDS", Integer::New(isolate, AF_RDS));
+  SET_VALUE(isolate, net, "AF_PPPOX", Integer::New(isolate, AF_PPPOX));
+  SET_VALUE(isolate, net, "AF_BLUETOOTH", Integer::New(isolate, AF_BLUETOOTH));
+  SET_VALUE(isolate, net, "AF_ALG", Integer::New(isolate, AF_ALG));
+  SET_VALUE(isolate, net, "AF_VSOCK", Integer::New(isolate, AF_VSOCK));
+  SET_VALUE(isolate, net, "AF_KCM", Integer::New(isolate, AF_KCM));
+  SET_VALUE(isolate, net, "AF_LLC", Integer::New(isolate, AF_LLC));
+  SET_VALUE(isolate, net, "AF_IB", Integer::New(isolate, AF_IB));
+  SET_VALUE(isolate, net, "AF_MPLS", Integer::New(isolate, AF_MPLS));
+  SET_VALUE(isolate, net, "AF_CAN", Integer::New(isolate, AF_CAN));
+
+  // Protocol Families - bits/socket.h
+  SET_VALUE(isolate, net, "AF_PACKET", Integer::New(isolate, AF_PACKET));
+  SET_VALUE(isolate, net, "ETH_P_ALL", Integer::New(isolate, ETH_P_ALL));
+
+  // packet types - linux/if_packet.h
+  SET_VALUE(isolate, net, "PACKET_BROADCAST", Integer::New(isolate, PACKET_BROADCAST));
+  SET_VALUE(isolate, net, "PACKET_MULTICAST", Integer::New(isolate, PACKET_MULTICAST));
+  SET_VALUE(isolate, net, "PACKET_OTHERHOST", Integer::New(isolate, PACKET_OTHERHOST));
+  SET_VALUE(isolate, net, "PACKET_OUTGOING", Integer::New(isolate, PACKET_OUTGOING));
+  SET_VALUE(isolate, net, "PACKET_HOST", Integer::New(isolate, PACKET_HOST));
+  SET_VALUE(isolate, net, "PACKET_LOOPBACK", Integer::New(isolate, PACKET_LOOPBACK));
+
   SET_VALUE(isolate, net, "SOCK_STREAM", Integer::New(isolate, SOCK_STREAM));
   SET_VALUE(isolate, net, "SOCK_DGRAM", Integer::New(isolate, SOCK_DGRAM));
+  SET_VALUE(isolate, net, "SOCK_RAW", Integer::New(isolate, SOCK_RAW));
+  SET_VALUE(isolate, net, "SOCK_SEQPACKET", Integer::New(isolate, SOCK_SEQPACKET));
+  SET_VALUE(isolate, net, "SOCK_RDM", Integer::New(isolate, SOCK_RDM));
+  SET_VALUE(isolate, net, "PF_PACKET", Integer::New(isolate, PF_PACKET));
+
   SET_VALUE(isolate, net, "SOCK_NONBLOCK", Integer::New(isolate, 
     SOCK_NONBLOCK));
+  SET_VALUE(isolate, net, "SOCK_CLOEXEC", Integer::New(isolate, SOCK_CLOEXEC));
   SET_VALUE(isolate, net, "SOL_SOCKET", Integer::New(isolate, SOL_SOCKET));
   SET_VALUE(isolate, net, "SO_ERROR", Integer::New(isolate, SO_ERROR));
   SET_VALUE(isolate, net, "SO_REUSEADDR", Integer::New(isolate, SO_REUSEADDR));
@@ -1647,6 +1739,19 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, net, "SO_INCOMING_CPU", Integer::New(isolate, 
     SO_INCOMING_CPU));
   SET_VALUE(isolate, net, "IPPROTO_TCP", Integer::New(isolate, IPPROTO_TCP));
+  SET_VALUE(isolate, net, "IPPROTO_UDP", Integer::New(isolate, IPPROTO_UDP));
+  SET_VALUE(isolate, net, "IPPROTO_ICMP", Integer::New(isolate, IPPROTO_ICMP));
+
+  SET_VALUE(isolate, net, "IPPROTO_IGMP", Integer::New(isolate, IPPROTO_IGMP));
+  SET_VALUE(isolate, net, "IPPROTO_IPV6", Integer::New(isolate, IPPROTO_IPV6));
+  SET_VALUE(isolate, net, "IPPROTO_AH", Integer::New(isolate, IPPROTO_AH));
+  SET_VALUE(isolate, net, "IPPROTO_ENCAP", Integer::New(isolate, IPPROTO_ENCAP));
+  SET_VALUE(isolate, net, "IPPROTO_COMP", Integer::New(isolate, IPPROTO_COMP));
+  SET_VALUE(isolate, net, "IPPROTO_PIM", Integer::New(isolate, IPPROTO_PIM));
+  SET_VALUE(isolate, net, "IPPROTO_SCTP", Integer::New(isolate, IPPROTO_SCTP));
+  SET_VALUE(isolate, net, "IPPROTO_UDPLITE", Integer::New(isolate, IPPROTO_UDPLITE));
+  SET_VALUE(isolate, net, "IPPROTO_RAW", Integer::New(isolate, IPPROTO_RAW));
+
   SET_VALUE(isolate, net, "TCP_NODELAY", Integer::New(isolate, TCP_NODELAY));
   SET_VALUE(isolate, net, "SO_KEEPALIVE", Integer::New(isolate, SO_KEEPALIVE));
   SET_VALUE(isolate, net, "SOMAXCONN", Integer::New(isolate, SOMAXCONN));

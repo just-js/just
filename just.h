@@ -25,6 +25,11 @@
 #include <sys/mman.h>
 #include <sys/times.h>
 #include <limits.h>
+#include <netinet/if_ether.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+
+#include <linux/if_packet.h>
 
 //#include <x86intrin.h>
 
@@ -153,6 +158,7 @@ void ReadString(const FunctionCallbackInfo<Value> &args);
 void Utf8Length(const FunctionCallbackInfo<Value> &args);
 void WriteString(const FunctionCallbackInfo<Value> &args);
 void GetAddress(const FunctionCallbackInfo<Value> &args);
+//void GetStringAddress(const FunctionCallbackInfo<Value> &args);
 void Fcntl(const FunctionCallbackInfo<Value> &args);
 void Cwd(const FunctionCallbackInfo<Value> &args);
 void Env(const FunctionCallbackInfo<Value> &args);
@@ -184,6 +190,7 @@ void SocketPair(const FunctionCallbackInfo<Value> &args);
 void Pipe(const FunctionCallbackInfo<Value> &args);
 void Connect(const FunctionCallbackInfo<Value> &args);
 void Bind(const FunctionCallbackInfo<Value> &args);
+void BindInterface(const FunctionCallbackInfo<Value> &args);
 void Accept(const FunctionCallbackInfo<Value> &args);
 void Seek(const FunctionCallbackInfo<Value> &args);
 void Read(const FunctionCallbackInfo<Value> &args);

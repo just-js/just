@@ -148,7 +148,7 @@ function clearTimeout (fd, loop = just.factory.loop) {
 }
 
 function runScript (script, name) {
-  return just.vm.runScript(`(function() {\n${script}\n})()`, name)
+  return just.vm.runScript(`(function() {${script}})()`, name)
 }
 
 function loadLibrary (path, name) {
