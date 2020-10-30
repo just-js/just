@@ -152,6 +152,8 @@ void HeapObjectStatistics(const FunctionCallbackInfo<Value> &args);
 void HeapCodeStatistics(const FunctionCallbackInfo<Value> &args);
 void HeapSpaceUsage(const FunctionCallbackInfo<Value> &args);
 void FreeMemory(void* buf, size_t length, void* data);
+void UnwrapMemory(void* buf, size_t length, void* data);
+void FreeMappedMemory(void* buf, size_t length, void* data);
 void Memcpy(const FunctionCallbackInfo<Value> &args);
 void Calloc(const FunctionCallbackInfo<Value> &args);
 void ReadString(const FunctionCallbackInfo<Value> &args);

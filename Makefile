@@ -6,7 +6,7 @@ RELEASE=0.0.5
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_\.-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-modules/zlib/deps/zlib-1.2.11/libz.a: ## install and compile the zlib modules, needed for builder runtime
+modules/zlib/zlib.a: ## install and compile the zlib modules, needed for builder runtime
 	rm -fr modules
 	curl -L -o modules.tar.gz https://github.com/just-js/modules/archive/$(RELEASE).tar.gz
 	tar -zxvf modules.tar.gz
@@ -36,12 +36,12 @@ runtime: builtins deps ## build dynamic runtime
 	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
 	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
 
-runtime-builder: builtins-build deps modules/zlib/deps/zlib-1.2.11/libz.a ## build builder runtime
+runtime-builder: builtins-build deps modules/zlib/zlib.a ## build builder runtime
 	$(CC) -D_GNU_SOURCE -c -DSHARED -DBUILDER -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Imodules/zlib/deps/zlib-1.2.11 -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
 	$(CC) -c -DSHARED -DBUILDER -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Imodules/zlib/deps/zlib-1.2.11 -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
 	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group modules/zlib/zlib.a deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
 
-runtime-builder-debug: builtins-build deps modules/zlib/deps/zlib-1.2.11/libz.a ## build builder runtime
+runtime-builder-debug: builtins-build deps modules/zlib/zlib.a ## build builder runtime
 	$(CC) -D_GNU_SOURCE -c -DSHARED -DBUILDER -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Imodules/zlib/deps/zlib-1.2.11 -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
 	$(CC) -c -DSHARED -DBUILDER -std=c++11 -DV8_COMPRESS_POINTERS -I. -Imodules/zlib -Imodules/zlib/deps/zlib-1.2.11 -Ideps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
 	$(CC) -rdynamic -pie -flto -pthread -m64 -g -Wl,--start-group modules/zlib/zlib.a deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just

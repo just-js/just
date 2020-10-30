@@ -796,10 +796,20 @@ void just::sys::HeapSpaceUsage(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(o);
 }
 
+// called when we need to free the memory after the wrapping arraybuffer is gc'd
 void just::sys::FreeMemory(void* buf, size_t length, void* data) {
-  fprintf(stderr, "free memory %lu. figure this out.\n", length);
-  //free(buf);
-  //free(data);
+  free(buf);
+  // todo: what do we do with *data?
+}
+
+// called when wrapping arraybuffer is gc'd and we don't want to free the underlying memory
+void just::sys::UnwrapMemory(void* buf, size_t length, void* data) {
+
+}
+
+// called when wrapping arraybuffer is gc'd and the underlying memory is mmaped
+void just::sys::FreeMappedMemory(void* buf, size_t length, void* data) {
+  munmap(buf, length);
 }
 
 void just::sys::Memcpy(const FunctionCallbackInfo<Value> &args) {
@@ -1032,7 +1042,7 @@ void just::sys::ReadMemory(const FunctionCallbackInfo<Value> &args) {
   // TODO: is this correct? will it leak?
   std::unique_ptr<BackingStore> backing =
       ArrayBuffer::NewBackingStore(start, size, 
-        FreeMemory, nullptr);
+        UnwrapMemory, nullptr);
   Local<ArrayBuffer> ab =
       ArrayBuffer::New(isolate, std::move(backing));
   args.GetReturnValue().Set(ab);
@@ -1162,7 +1172,7 @@ void just::sys::MMap(const FunctionCallbackInfo<Value> &args) {
   }
   std::unique_ptr<BackingStore> backing =
       SharedArrayBuffer::NewBackingStore(data, len, 
-        FreeMemory, nullptr);
+        FreeMappedMemory, nullptr);
   Local<SharedArrayBuffer> ab =
       SharedArrayBuffer::New(isolate, std::move(backing));
   args.GetReturnValue().Set(ab);
