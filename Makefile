@@ -6,12 +6,53 @@ RELEASE=0.0.5
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_\.-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-modules/zlib/zlib.a: ## install and compile the zlib modules, needed for builder runtime
+modules: ## download the modules for this release
 	rm -fr modules
 	curl -L -o modules.tar.gz https://github.com/just-js/modules/archive/$(RELEASE).tar.gz
 	tar -zxvf modules.tar.gz
 	mv modules-$(RELEASE) modules
-	JUST_HOME=$(JUST_HOME) make -C modules/zlib/ deps zlib.a
+
+examples: ## download the examples for this release
+	rm -fr examples
+	curl -L -o examples.tar.gz https://github.com/just-js/examples/archive/$(RELEASE).tar.gz
+	tar -zxvf examples.tar.gz
+	mv examples-$(RELEASE) examples
+
+modules/zlib/zlib.a: modules ## build the zlib static library
+	JUST_HOME=$(JUST_HOME) make -C modules/zlib/ zlib.a
+
+modules-blake3: modules ## build the blake3 shared library
+	JUST_HOME=$(JUST_HOME) make -C modules/blake3/ blake3.so install
+
+modules-ffi: modules ## build the ffi shared library
+	JUST_HOME=$(JUST_HOME) make -C modules/ffi/ ffi.so install
+
+modules-html: modules ## build the html shared library
+	JUST_HOME=$(JUST_HOME) make -C modules/html/ html.so install
+
+modules-openssl: modules ## build the openssl shared library
+	JUST_HOME=$(JUST_HOME) make -C modules/openssl/ openssl.so install
+
+modules-pg: modules ## build the pg shared library
+	JUST_HOME=$(JUST_HOME) make -C modules/pg/ pg.so install
+
+modules-http: modules ## build the picohttp shared library
+	JUST_HOME=$(JUST_HOME) make -C modules/picohttp/ http.so install
+
+modules-rocksdb: modules ## build the rocksdb shared library
+	JUST_HOME=$(JUST_HOME) make -C modules/rocksdb/ rocksdb.so install
+
+modules-tinycc: modules ## build the tinycc shared library
+	JUST_HOME=$(JUST_HOME) make -C modules/tinycc/ tcc.so install
+
+modules-zlib: modules ## build the zlib shared library
+	JUST_HOME=$(JUST_HOME) make -C modules/zlib/ zlib.so install
+
+module: modules ## build a named module
+	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean shared install
+
+module-debug: modules ## build a named module
+	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean debug-shared install
 
 builtins-build-deps: deps just.cc just.h Makefile main.cc just.js lib/*.js ## compile builtins with build dependencies
 	ld -r -b binary deps.tar.gz just.cc just.h just.js Makefile main.cc lib/websocket.js lib/inspector.js lib/loop.js lib/require.js lib/path.js lib/repl.js lib/fs.js lib/build.js -o builtins.o
