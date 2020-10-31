@@ -18,9 +18,6 @@ examples: ## download the examples for this release
 	tar -zxvf examples.tar.gz
 	mv examples-$(RELEASE) examples
 
-modules/zlib/zlib.a: modules ## build the zlib static library
-	JUST_HOME=$(JUST_HOME) make -C modules/zlib/ zlib.a
-
 modules-blake3: modules ## build the blake3 shared library
 	JUST_HOME=$(JUST_HOME) make -C modules/blake3/ blake3.so install
 
@@ -53,6 +50,9 @@ module: modules ## build a named module
 
 module-debug: modules ## build a named module
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean debug-shared install
+
+modules/zlib/zlib.a: modules ## build the zlib static library
+	JUST_HOME=$(JUST_HOME) make -C modules/zlib/ static
 
 builtins-build-deps: deps just.cc just.h Makefile main.cc just.js lib/*.js ## compile builtins with build dependencies
 	ld -r -b binary deps.tar.gz just.cc just.h just.js Makefile main.cc lib/websocket.js lib/inspector.js lib/loop.js lib/require.js lib/path.js lib/repl.js lib/fs.js lib/build.js -o builtins.o
