@@ -120,6 +120,15 @@ make MODULE=fib module-debug
 - Set breakpoints in your code
 - Launch "Just Debug! (C++)"
 
+## C++ Intellisense
+
+- Install the Microsoft C/C++ Extension below
+- Download the full v8 source of the release Just(js) was built with so you can drill down to the v8 code if you need to
+
+```
+make v8src
+```
+
 ## Useful Extensions
 
 - StandardJS: https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs
