@@ -88,7 +88,7 @@ make runtime-builder-debug
 ```
 make MODULE=fib module-debug
 ```
-
+- Install the Microsoft [C/C++ Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
 - create a .vscode/launch.json file
 ```json
 {
@@ -117,10 +117,41 @@ make MODULE=fib module-debug
   ]
 }
 ```
-- Set breakpoints in your code
+- Set breakpoints in your C++ code
 - Launch "Just Debug! (C++)"
+- Add the following to your .vscode/settings.json for code browsing
+```json
+{
+  "C_Cpp.default.defines": ["V8_TARGET_ARCH_X64"],
+  "C_Cpp.default.includePath": [
+      "${workspaceFolder}",
+      "${workspaceFolder}/deps/v8/include",
+      "${workspaceFolder}/deps/v8/src",
+      "${workspaceFolder}/deps/v8/gen",
+      "${workspaceFolder}/deps/v8",
+      "${workspaceFolder}/modules/blake3",
+      "${workspaceFolder}/modules/ffi",
+      "${workspaceFolder}/modules/fib",
+      "${workspaceFolder}/modules/html",
+      "${workspaceFolder}/modules/openssl",
+      "${workspaceFolder}/modules/openssl/deps/openssl-OpenSSL_1_1_1d/include",
+      "${workspaceFolder}/modules/pg",
+      "${workspaceFolder}/modules/pg/deps/postgresql-12.3/src/include",
+      "${workspaceFolder}/modules/pg/deps/postgresql-12.3/src",
+      "${workspaceFolder}/modules/pg/deps/postgresql-12.3/src/interfaces/libpq",
+      "${workspaceFolder}/modules/picohttp",
+      "${workspaceFolder}/modules/rocksdb",
+      "${workspaceFolder}/modules/rocksdb/deps/rocksdb-6.10.2/include",
+      "${workspaceFolder}/modules/tcc",
+      "${workspaceFolder}/modules/tcc/deps/tcc-0.9.27",
+      "${workspaceFolder}/modules/zlib/deps/zlib-1.2.11",
+      "${workspaceFolder}/modules/zlib"
+  ],
+  "C_Cpp.default.cppStandard": "c++11"
+}
+```
 
-## C++ Intellisense
+## C++ Intellisense/Code Browsing
 
 - Install the Microsoft C/C++ Extension below
 - Download the full v8 source of the release Just(js) was built with so you can drill down to the v8 code if you need to
@@ -131,5 +162,11 @@ make v8src
 
 ## Useful Extensions
 
-- StandardJS: https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs
+- StandardJS: https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs. Add the following to your .vscode/settings.json:
+```json
+  "standard.enable": true,
+  "standard.options": {
+      "globals": ["just", "BigInt", "BigUint64Array", "Atomics", "WebAssembly", "SharedArrayBuffer"]
+  },
+```
 - Microsoft C/C++ Extension: https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
