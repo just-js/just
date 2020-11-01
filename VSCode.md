@@ -19,6 +19,9 @@ git clone git@github.com:just-js/just.git
 # Start in VSCode
 
 - open the 'just' folder in vscode
+
+you should be prompted to "Reopen in Container". Click that button.
+
 - wait for container to be built and started
 - open a terminal in vscode
 
@@ -33,13 +36,13 @@ make runtime-builder install
 ## build a module
 
 ```
-just build modules-blake3
+make MODULE=blake3 module
 ```
 
 ## Download Examples
 
 ```
-just build examples
+make examples
 ```
 
 ## Create a Module
@@ -48,12 +51,7 @@ just build examples
 - build your module
 
 ```
-MODULE=fib just build module
-```
-OR
-
-```
-just build MODULE=fib module
+make MODULE=fib module
 ```
 
 # Test Your Module
@@ -73,10 +71,9 @@ just eval "just.print(just.library('fib.so', 'fib').fib.calculate(parseInt(just.
 
 # C++ Extension and Intellisense
 
-
-
 ## Debugging Javascript
 
+** should be fixed soon **
 
 ## Debugging C++
 
@@ -98,7 +95,7 @@ make MODULE=fib module-debug
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "(gdb) Launch",
+      "name": "Just Debug! (C++)",
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/just",
@@ -121,7 +118,7 @@ make MODULE=fib module-debug
 }
 ```
 - Set breakpoints in your code
-- Launch "gdb (Launch)"
+- Launch "Just Debug! (C++)"
 
 ## Useful Extensions
 

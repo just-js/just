@@ -18,38 +18,14 @@ examples: ## download the examples for this release
 	tar -zxvf examples.tar.gz
 	mv examples-$(RELEASE) examples
 
-modules-blake3: modules ## build the blake3 shared library
-	JUST_HOME=$(JUST_HOME) make -C modules/blake3/ blake3.so install
-
-modules-ffi: modules ## build the ffi shared library
-	JUST_HOME=$(JUST_HOME) make -C modules/ffi/ ffi.so install
-
-modules-html: modules ## build the html shared library
-	JUST_HOME=$(JUST_HOME) make -C modules/html/ html.so install
-
-modules-openssl: modules ## build the openssl shared library
-	JUST_HOME=$(JUST_HOME) make -C modules/openssl/ openssl.so install
-
-modules-pg: modules ## build the pg shared library
-	JUST_HOME=$(JUST_HOME) make -C modules/pg/ pg.so install
-
-modules-http: modules ## build the picohttp shared library
-	JUST_HOME=$(JUST_HOME) make -C modules/picohttp/ http.so install
-
-modules-rocksdb: modules ## build the rocksdb shared library
-	JUST_HOME=$(JUST_HOME) make -C modules/rocksdb/ rocksdb.so install
-
-modules-tinycc: modules ## build the tinycc shared library
-	JUST_HOME=$(JUST_HOME) make -C modules/tinycc/ tcc.so install
-
-modules-zlib: modules ## build the zlib shared library
-	JUST_HOME=$(JUST_HOME) make -C modules/zlib/ zlib.so install
-
-module: modules ## build a named module
+module: modules ## build a shared library for a module 
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean shared install
 
-module-debug: modules ## build a named module
+module-debug: modules ## build a debug version of a shared library for a module
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean debug-shared install
+
+module-static: modules ## build a static library for a module
+	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean static
 
 modules/zlib/zlib.a: modules ## build the zlib static library
 	JUST_HOME=$(JUST_HOME) make -C modules/zlib/ static
