@@ -102,6 +102,7 @@ cleanall: ## remove just and build deps
 	rm -fr deps
 	rm -f *.gz
 	rm -fr modules
+	rm -fr examples
 	make clean
 
 install: ## install

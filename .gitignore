@@ -11,3 +11,4 @@ deps
 *.o
 *.a
 modules
+examples
