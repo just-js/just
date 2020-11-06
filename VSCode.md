@@ -27,8 +27,13 @@ you should be prompted to "Reopen in Container". Click that button.
 
 # VSCode Terminal Commands
 
+## export JUST_HOME env var
+```
+JUST_HOME=$(pwd)/just
+```
 ## build the builder runtime and install it
 
+from the "just" folder you just cloned
 ```
 make runtime-builder install
 ```

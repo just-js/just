@@ -1,5 +1,7 @@
 CC=g++
 RELEASE=0.0.5
+INSTALL=/usr/local/bin
+LIBS=/usr/local/lib/just
 
 .PHONY: help clean
 
@@ -106,9 +108,10 @@ cleanall: ## remove just and build deps
 	make clean
 
 install: ## install
-	sudo cp -f just /usr/local/bin/
+	mkdir -p ${INSTALL}
+	cp -f just ${INSTALL}/just
 
 uninstall: ## uninstall
-	sudo rm -f /usr/local/bin/just
+	rm -f ${INSTALL}/just
 
 .DEFAULT_GOAL := help
