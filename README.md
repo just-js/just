@@ -2,6 +2,8 @@
 
 A very small v8 javascript runtime for linux only
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/just-js/binder/HEAD)
+
 ## Philosophy/Goals
 - small, secure, robust and performant js runtime for linux
 - small codebase. easy to understand and hack
