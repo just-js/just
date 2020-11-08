@@ -156,6 +156,7 @@ function loadLibrary (path, name) {
   if (!handle) return
   const ptr = just.sys.dlsym(handle, `_register_${name}`)
   if (!ptr) return
+  just.sys.dlclose(handle)
   return just.sys.library(ptr)
 }
 
