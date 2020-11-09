@@ -21,10 +21,10 @@ examples: ## download the examples for this release
 	mv examples-$(RELEASE) examples
 
 module: modules ## build a shared library for a module 
-	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean shared install
+	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean shared
 
 module-debug: modules ## build a debug version of a shared library for a module
-	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean debug-shared install
+	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean debug-shared
 
 module-static: modules ## build a static library for a module
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean static
