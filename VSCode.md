@@ -31,11 +31,11 @@ you should be prompted to "Reopen in Container". Click that button.
 ```
 JUST_HOME=$(pwd)/just
 ```
-## build the builder runtime and install it
+## build the runtime and install it
 
 from the "just" folder you just cloned
 ```
-make runtime-builder install
+make runtime install
 ```
 
 ## build a module
@@ -86,7 +86,7 @@ https://code.visualstudio.com/docs/remote/containers#_debugging-in-a-container
 
 - build the debug version of the runtime
 ```
-make runtime-builder-debug
+make runtime-debug
 ```
 
 - build a debug version of your module
