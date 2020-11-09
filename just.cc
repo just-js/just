@@ -426,10 +426,10 @@ void just::sys::Spawn(const FunctionCallbackInfo<Value> &args) {
   String::Utf8Value filePath(isolate, args[0]);
   String::Utf8Value cwd(isolate, args[1]);
   Local<Array> arguments = args[2].As<Array>();
-  int fds[3];
-  fds[0] = args[3]->IntegerValue(context).ToChecked();
-  fds[1] = args[4]->IntegerValue(context).ToChecked();
-  fds[2] = args[5]->IntegerValue(context).ToChecked();
+  int fds[6];
+  fds[0] = args[3]->IntegerValue(context).ToChecked(); // STDIN READ
+  fds[1] = args[4]->IntegerValue(context).ToChecked(); // STDOUT WRITE
+  fds[2] = args[5]->IntegerValue(context).ToChecked(); // STDERR WRITE
   int len = arguments->Length();
   char** argv = (char**)calloc(len + 2, sizeof(char*));
   //char* argv[len + 2];
@@ -455,17 +455,17 @@ void just::sys::Spawn(const FunctionCallbackInfo<Value> &args) {
     return;
   }
   if (pid == 0) {
-    close(0);
-    close(1);
-    close(2);
-    dup2(fds[0], 0);
-    dup2(fds[1], 1);
-    dup2(fds[2], 2);
     int r = chdir(*cwd);
     if (r < 0) {
       fprintf(stderr, "error changing directory\n");
       exit(127);
     }
+    // todo: check return codes
+    // copy the pipes from the parent process into stdio fds
+    dup2(fds[0], STDIN_FILENO);
+    dup2(fds[1], STDOUT_FILENO);
+    dup2(fds[2], STDERR_FILENO);
+    // todo: use execve and pass environment
     execvp(*filePath, argv);
     perror("error launching child process");
     for (int i = 0; i < len; i++) {
@@ -474,15 +474,11 @@ void just::sys::Spawn(const FunctionCallbackInfo<Value> &args) {
     free(argv);
     exit(127);
   } else {
-    close(fds[0]);
-    close(fds[1]);
-    close(fds[2]);
     args.GetReturnValue().Set(Integer::New(isolate, pid));
     for (int i = 0; i < len; i++) {
       free(argv[i]);
     }
     free(argv);
-    return;
   }
 }
 
@@ -1241,8 +1237,12 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
     TFD_NONBLOCK));
   SET_VALUE(isolate, sys, "TFD_CLOEXEC", Integer::New(isolate, 
     TFD_CLOEXEC));
+  SET_VALUE(isolate, sys, "FD_CLOEXEC", Integer::New(isolate, 
+    FD_CLOEXEC));
   SET_VALUE(isolate, sys, "F_GETFL", Integer::New(isolate, F_GETFL));
   SET_VALUE(isolate, sys, "F_SETFL", Integer::New(isolate, F_SETFL));
+  SET_VALUE(isolate, sys, "F_GETFD", Integer::New(isolate, F_GETFD));
+  SET_VALUE(isolate, sys, "F_SETFD", Integer::New(isolate, F_SETFD));
   SET_VALUE(isolate, sys, "STDIN_FILENO", Integer::New(isolate, 
     STDIN_FILENO));
   SET_VALUE(isolate, sys, "STDOUT_FILENO", Integer::New(isolate, 
