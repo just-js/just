@@ -193,6 +193,7 @@ void Pipe(const FunctionCallbackInfo<Value> &args);
 void Connect(const FunctionCallbackInfo<Value> &args);
 void Bind(const FunctionCallbackInfo<Value> &args);
 void BindInterface(const FunctionCallbackInfo<Value> &args);
+void GetMacAddress(const FunctionCallbackInfo<Value> &args);
 void Accept(const FunctionCallbackInfo<Value> &args);
 void Seek(const FunctionCallbackInfo<Value> &args);
 void Read(const FunctionCallbackInfo<Value> &args);

@@ -1036,6 +1036,7 @@ void just::sys::ReadMemory(const FunctionCallbackInfo<Value> &args) {
   const uint64_t size = end64->Uint64Value() - start64->Uint64Value();
   void* start = reinterpret_cast<void*>(start64->Uint64Value());
   // TODO: is this correct? will it leak?
+  // todo: we should pass the buffer in. change all code where we create objects like this
   std::unique_ptr<BackingStore> backing =
       ArrayBuffer::NewBackingStore(start, size, 
         UnwrapMemory, nullptr);
@@ -1255,10 +1256,6 @@ void just::sys::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, sys, "MAP_SHARED", Integer::New(isolate, MAP_SHARED));
   SET_VALUE(isolate, sys, "MAP_ANONYMOUS", Integer::New(isolate, MAP_ANONYMOUS));
   SET_VALUE(isolate, sys, "RTLD_NOW", Integer::New(isolate, RTLD_NOW));
-  SET_VALUE(isolate, sys, "SIGTERM", Integer::New(isolate, SIGTERM));
-  SET_VALUE(isolate, sys, "SIGHUP", Integer::New(isolate, SIGHUP));
-  SET_VALUE(isolate, sys, "SIGUSR1", Integer::New(isolate, SIGUSR1));
-
   SET_VALUE(isolate, sys, "BYTE_ORDER", Integer::New(isolate, __BYTE_ORDER));
   SET_VALUE(isolate, sys, "LITTLE_ENDIAN", Integer::New(isolate, __LITTLE_ENDIAN));
   SET_VALUE(isolate, sys, "BIG_ENDIAN", Integer::New(isolate, __BIG_ENDIAN));
@@ -1405,8 +1402,12 @@ void just::net::Pipe(const FunctionCallbackInfo<Value> &args) {
   HandleScope handleScope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
   Local<Array> answer = args[0].As<Array>();
+  int flags = O_CLOEXEC;
+  if (args.Length() > 1) {
+    flags = args[1]->Int32Value(context).ToChecked();
+  }
   int fd[2];
-  int r = pipe(fd);
+  int r = pipe2(fd, flags);
   if (r == 0) {
     answer->Set(context, 0, Integer::New(isolate, fd[0])).Check();
     answer->Set(context, 1, Integer::New(isolate, fd[1])).Check();
@@ -1463,6 +1464,26 @@ void just::net::Bind(const FunctionCallbackInfo<Value> &args) {
     strncpy(server_addr.sun_path, *path, sizeof(server_addr.sun_path));
     r = bind(fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr));
   }
+  args.GetReturnValue().Set(Integer::New(isolate, r));
+}
+
+void just::net::GetMacAddress(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  Local<Context> context = isolate->GetCurrentContext();  
+  int fd = args[0]->Int32Value(context).ToChecked();
+  String::Utf8Value name(isolate, args[1]);
+  struct ifreq ifr;
+  memset(&ifr,0,sizeof(ifr));
+  strncpy(ifr.ifr_name, *name, sizeof(ifr.ifr_name));
+  int r = ioctl(fd, SIOCGIFHWADDR, &ifr);
+  if (r < 0) {
+    args.GetReturnValue().Set(Integer::New(isolate, r));
+    return;
+  }
+  Local<ArrayBuffer> buf = args[2].As<ArrayBuffer>();
+  std::shared_ptr<BackingStore> backing = buf->GetBackingStore();
+  memcpy(backing->Data(), ifr.ifr_hwaddr.sa_data, 6);
   args.GetReturnValue().Set(Integer::New(isolate, r));
 }
 
@@ -1688,6 +1709,7 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, net, "pipe", Pipe);
   SET_METHOD(isolate, net, "bind", Bind);
   SET_METHOD(isolate, net, "bindInterface", BindInterface);
+  SET_METHOD(isolate, net, "getMacAddress", GetMacAddress);
   SET_METHOD(isolate, net, "accept", Accept);
   SET_METHOD(isolate, net, "read", Read);
   SET_METHOD(isolate, net, "seek", Seek);
@@ -1766,6 +1788,8 @@ void just::net::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, net, "SO_KEEPALIVE", Integer::New(isolate, SO_KEEPALIVE));
   SET_VALUE(isolate, net, "SOMAXCONN", Integer::New(isolate, SOMAXCONN));
   SET_VALUE(isolate, net, "O_NONBLOCK", Integer::New(isolate, O_NONBLOCK));
+  SET_VALUE(isolate, net, "O_CLOEXEC", Integer::New(isolate, O_CLOEXEC));
+  
   SET_VALUE(isolate, net, "EAGAIN", Integer::New(isolate, EAGAIN));
   SET_VALUE(isolate, net, "EWOULDBLOCK", Integer::New(isolate, EWOULDBLOCK));
   SET_VALUE(isolate, net, "EINTR", Integer::New(isolate, EINTR));
@@ -1887,6 +1911,12 @@ void just::fs::Ioctl(const FunctionCallbackInfo<Value> &args) {
   Local<Context> context = isolate->GetCurrentContext();
   int fd = args[0]->Int32Value(context).ToChecked();
   int flags = args[1]->Int32Value(context).ToChecked();
+  if (args.Length() > 2) {
+    Local<ArrayBuffer> buf = args[2].As<ArrayBuffer>();
+    std::shared_ptr<BackingStore> backing = buf->GetBackingStore();
+    args.GetReturnValue().Set(Integer::New(isolate, ioctl(fd, flags, backing->Data())));
+    return;
+  }
   args.GetReturnValue().Set(Integer::New(isolate, ioctl(fd, flags)));
 }
 
@@ -2541,6 +2571,7 @@ void just::signals::SigAddSet(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(BigInt::New(isolate, sigaddset(set, signum)));
 }
 
+// todo: rename namespace to "signal" singular
 void just::signals::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   Local<ObjectTemplate> module = ObjectTemplate::New(isolate);
   SET_METHOD(isolate, module, "sigprocmask", SigProcMask);
@@ -2553,8 +2584,59 @@ void just::signals::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, module, "JUST_SIGSAVE", Integer::New(isolate, 1));
   SET_VALUE(isolate, module, "JUST_SIGLOAD", Integer::New(isolate, 0));
   SET_VALUE(isolate, module, "SIG_BLOCK", Integer::New(isolate, SIG_BLOCK));
+  SET_VALUE(isolate, module, "SIG_UNBLOCK", Integer::New(isolate, SIG_UNBLOCK));
   SET_VALUE(isolate, module, "SIG_SETMASK", Integer::New(isolate, 
     SIG_SETMASK));
+  SET_VALUE(isolate, module, "SIGINT", Integer::New(isolate, SIGINT));
+  SET_VALUE(isolate, module, "SIGILL", Integer::New(isolate, SIGILL));
+  SET_VALUE(isolate, module, "SIGABRT", Integer::New(isolate, SIGABRT));
+  SET_VALUE(isolate, module, "SIGFPE", Integer::New(isolate, SIGFPE));
+  SET_VALUE(isolate, module, "SIGSEGV", Integer::New(isolate, SIGSEGV));
+  SET_VALUE(isolate, module, "SIGTERM", Integer::New(isolate, SIGTERM));
+  /* Historical signals specified by POSIX. */
+  SET_VALUE(isolate, module, "SIGHUP", Integer::New(isolate, SIGHUP));
+  SET_VALUE(isolate, module, "SIGQUIT", Integer::New(isolate, SIGQUIT));
+  SET_VALUE(isolate, module, "SIGTRAP", Integer::New(isolate, SIGTRAP));
+  SET_VALUE(isolate, module, "SIGKILL", Integer::New(isolate, SIGKILL));
+  SET_VALUE(isolate, module, "SIGPIPE", Integer::New(isolate, SIGPIPE));
+  SET_VALUE(isolate, module, "SIGALRM", Integer::New(isolate, SIGALRM));
+  /* New(er) POSIX signals (1003.1-2008, 1003.1-2013).  */
+  SET_VALUE(isolate, module, "SIGTTIN", Integer::New(isolate, SIGTTIN));
+  SET_VALUE(isolate, module, "SIGTTOU", Integer::New(isolate, SIGTTOU));
+  SET_VALUE(isolate, module, "SIGXCPU", Integer::New(isolate, SIGXCPU));
+  SET_VALUE(isolate, module, "SIGXFSZ", Integer::New(isolate, SIGXFSZ));
+  SET_VALUE(isolate, module, "SIGVTALRM", Integer::New(isolate, SIGVTALRM));
+  SET_VALUE(isolate, module, "SIGPROF", Integer::New(isolate, SIGPROF));
+  /* Nonstandard signals found in all modern POSIX systems
+    (including both BSD and Linux).  */
+  SET_VALUE(isolate, module, "SIGWINCH", Integer::New(isolate, SIGWINCH));
+  /* Not all systems support real-time signals.  bits/signum.h indicates
+    that they are supported by overriding __SIGRTMAX to a value greater
+    than __SIGRTMIN.  These constants give the kernel-level hard limits,
+    but some real-time signals may be used internally by glibc.  Do not
+    use these constants in application code; use SIGRTMIN and SIGRTMAX
+    (defined in signal.h) instead.  */
+  SET_VALUE(isolate, module, "__SIGRTMIN", Integer::New(isolate, __SIGRTMIN));
+  SET_VALUE(isolate, module, "__SIGRTMAX", Integer::New(isolate, __SIGRTMAX));
+  /* Biggest signal number + 1 (including real-time signals).  */
+  SET_VALUE(isolate, module, "_NSIG", Integer::New(isolate, __SIGRTMAX + 1));
+  SET_VALUE(isolate, module, "SIGSTKFLT", Integer::New(isolate, SIGSTKFLT));
+  SET_VALUE(isolate, module, "SIGPWR", Integer::New(isolate, SIGPWR));
+  // Linux Signals - signum.h
+  SET_VALUE(isolate, module, "SIGBUS", Integer::New(isolate, SIGBUS));
+  SET_VALUE(isolate, module, "SIGUSR1", Integer::New(isolate, SIGUSR1));
+  SET_VALUE(isolate, module, "SIGUSR2", Integer::New(isolate, SIGUSR2));
+  SET_VALUE(isolate, module, "SIGCHLD", Integer::New(isolate, SIGCHLD));
+  SET_VALUE(isolate, module, "SIGCLD", Integer::New(isolate, SIGCLD));
+  SET_VALUE(isolate, module, "SIGCONT", Integer::New(isolate, SIGCONT));
+  SET_VALUE(isolate, module, "SIGSTOP", Integer::New(isolate, SIGSTOP));
+  SET_VALUE(isolate, module, "SIGTSTP", Integer::New(isolate, SIGTSTP));
+  SET_VALUE(isolate, module, "SIGURG", Integer::New(isolate, SIGURG));
+  SET_VALUE(isolate, module, "SIGPOLL", Integer::New(isolate, SIGPOLL));
+  SET_VALUE(isolate, module, "SIGIO", Integer::New(isolate, SIGIO));
+  SET_VALUE(isolate, module, "SIGIOT", Integer::New(isolate, SIGIOT));
+  SET_VALUE(isolate, module, "SIGSYS", Integer::New(isolate, SIGSYS));
+  SET_VALUE(isolate, module, "__SIGRTMAX", Integer::New(isolate, __SIGRTMAX));
   SET_MODULE(isolate, target, "signal", module);
 }
 
@@ -2824,6 +2906,7 @@ void just::PromiseRejectCallback(PromiseRejectMessage message) {
 }
 
 void just::InitModules(Isolate* isolate, Local<ObjectTemplate> just) {
+  //todo: can't we also move this to JS and make ALL the bootstrapping decisions there?
   vm::Init(isolate, just);
   tty::Init(isolate, just);
   fs::Init(isolate, just);
