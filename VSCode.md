@@ -35,13 +35,15 @@ JUST_HOME=$(pwd)/just
 
 from the "just" folder you just cloned
 ```
-make runtime install
+make runtime
+sudo make install
 ```
 
 ## build a module
 
 ```
 make MODULE=blake3 module
+sudo make -C modules/blake3 install
 ```
 
 ## Download Examples
@@ -57,6 +59,7 @@ make examples
 
 ```
 make MODULE=fib module
+sudo make -C modules/fib install
 ```
 
 # Test Your Module
@@ -175,3 +178,25 @@ make v8src
   },
 ```
 - Microsoft C/C++ Extension: https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
+
+## HTTP Server Example
+
+Run the server. It listens on 127.0.0.1:3000
+
+```
+make runtime
+sudo make install
+make MODULE=http module
+sudo make -C modules/http install
+make examples
+cd examples/http
+just server.js
+```
+
+Test the Server
+
+```
+curl -vvv http://127.0.0.1:3000/
+curl -vvv http://127.0.0.1:3000/json
+curl -vvv http://127.0.0.1:3000/async
+```
