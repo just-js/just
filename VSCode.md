@@ -81,7 +81,33 @@ just eval "just.print(just.library('fib.so', 'fib').fib.calculate(parseInt(just.
 
 ## Debugging Javascript
 
-** should be fixed soon **
+This should now be working. To try it out, follow the instructions to run the HTTP server below but instead run the server with the --inspector flag, e.g.
+```
+just --inspector server.js
+```
+
+You should then be able to debug from VSCode using this launch configuration:
+```json
+    {
+      "address": "127.0.0.1",
+      "localRoot": "/workspaces/just",
+      "name": "Attach to Remote",
+      "port": 9222,
+      "remoteRoot": "/workspaces/just",
+      "request": "attach",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+```
+
+give it a couple of seconds to hook up and you should see "server.js" appear in the "Loaded Scripts" section. You may need to expand the workspaces to see it.
+
+![Hello World](https://i.ibb.co/854RS8z/debugging.png)
+
+
+double-click on server.js to open it in the editor and then you can set breakpoints, step through code etc.
 
 ## Debugging C++
 
