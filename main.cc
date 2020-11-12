@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   // internal v8 error messages that may be written to stdio
   setvbuf(stdout, nullptr, _IONBF, 0);
   setvbuf(stderr, nullptr, _IONBF, 0);
-  //signal(SIGPIPE, SIG_IGN);
+  signal(SIGPIPE, SIG_IGN);
   std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
   v8::V8::InitializePlatform(platform.get());
   v8::V8::Initialize();

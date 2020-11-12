@@ -159,6 +159,16 @@ function loadLibrary (path, name) {
   return just.sys.library(ptr)
 }
 
+class SystemError {
+  constructor (syscall) {
+    const { sys } = just
+    this.name = 'SystemError'
+    this.message = `${syscall} (${sys.errno()}) ${sys.strerror(sys.errno())}`
+    Error.captureStackTrace(this, this.constructor)
+    this.stack = this.stack.split('\n').slice(0, -4).join('\n')
+  }
+}
+
 function main () {
   delete global.console
   const { fs, sys, net } = just
@@ -185,6 +195,7 @@ function main () {
   just.hrtime = wrapHrtime(sys.hrtime)
   just.env = wrapEnv(sys.env)
   just.requireCache = {}
+  just.SystemError = SystemError
   global.require = just.require = just.requireNative = wrapRequireNative(just.requireCache).require
   const requireModule = just.require('require')
   if (requireModule) {
