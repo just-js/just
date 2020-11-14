@@ -97,7 +97,6 @@ function wrapEnv (env) {
 }
 
 function wrapRequire (handle, cache = {}) {
-
   function loadLibrary (path, name) {
     if (cache[path]) return cache[path]
     const handle = just.sys.dlopen(path, just.sys.RTLD_LAZY)
