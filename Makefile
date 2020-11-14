@@ -1,5 +1,5 @@
 CC=g++
-RELEASE=0.0.5
+RELEASE=0.0.6
 INSTALL=/usr/local/bin
 LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/config.js ${MAIN}
 MODULES=modules/net/net.o modules/epoll/epoll.o modules/fs/fs.o modules/sys/sys.o modules/vm/vm.o
