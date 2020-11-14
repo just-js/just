@@ -1,7 +1,11 @@
 CC=g++
 RELEASE=0.0.5
 INSTALL=/usr/local/bin
-LIBS=/usr/local/lib/just
+LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/config.js ${MAIN}
+MODULES=modules/net/net.o modules/epoll/epoll.o modules/fs/fs.o modules/sys/sys.o modules/vm/vm.o
+TARGET=just
+LIB=
+MAIN=just.js
 
 .PHONY: help clean
 
@@ -21,16 +25,13 @@ examples: ## download the examples for this release
 	mv examples-$(RELEASE) examples
 
 module: modules ## build a shared library for a module 
-	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean shared
+	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ library
 
 module-debug: modules ## build a debug version of a shared library for a module
-	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean debug-shared
+	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ library-debug
 
-module-static: modules ## build a static library for a module
-	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ clean static
-
-builtins: deps just.cc just.h Makefile main.cc just.js lib/*.js ## compile builtins with build dependencies
-	ld -r -b binary just.cc just.h just.js Makefile main.cc lib/websocket.js lib/inspector.js lib/loop.js lib/require.js lib/path.js lib/repl.js lib/fs.js lib/build.js -o builtins.o
+builtins: deps just.cc just.h Makefile main.cc ${MAIN} ## compile builtins with build dependencies
+	ld -r -b binary just.cc just.h Makefile main.cc ${LIBS} -o builtins.o
 
 deps: ## download v8 lib and headers
 	mkdir -p deps
@@ -51,29 +52,29 @@ v8src: ## download the v8 source for this release
 	rm -fr deps/v8src-$(RELEASE)
 	rm -f deps/$(RELEASE).tar.gz
 
-runtime: builtins deps ## build dynamic runtime
-	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
+runtime: modules builtins deps ## build dynamic runtime
+	make MODULE=net module
+	make MODULE=sys module
+	make MODULE=epoll module
+	make MODULE=vm module
+	make MODULE=fs module
+	$(CC) -c -DJUST_VERSION='"${RELEASE}"' -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
 	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
+	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group -ldl -lrt ${LIB} -o ${TARGET}
 
-runtime-debug: builtins deps ## build debug version of runtime
-	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
-
-runtime-static: builtins deps ## build static version of runtime
-	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -s -static -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -lrt -o just
-
-runtime-debug-static: builtins deps ## build static debug version of runtime
-	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -static -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o -Wl,--end-group -ldl -lrt -o just
+runtime-debug: modules builtins deps ## build debug version of runtime
+	make MODULE=net module-debug
+	make MODULE=sys module-debug
+	make MODULE=epoll module-debug
+	make MODULE=vm module-debug
+	make MODULE=fs module-debug
+	$(CC) -c -DJUST_VERSION='"${RELEASE}"' -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
+	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
+	$(CC) -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group -ldl -lrt ${LIB} -o ${TARGET}
 
 clean: ## tidy up
 	rm -f *.o
-	rm -f just
+	rm -f ${TARGET}
 
 cleanall: ## remove just and build deps
 	rm -fr deps
@@ -84,9 +85,9 @@ cleanall: ## remove just and build deps
 
 install: ## install
 	mkdir -p ${INSTALL}
-	cp -f just ${INSTALL}/just
+	cp -f ${TARGET} ${INSTALL}/${TARGET}
 
 uninstall: ## uninstall
-	rm -f ${INSTALL}/just
+	rm -f ${INSTALL}/${TARGET}
 
 .DEFAULT_GOAL := help
