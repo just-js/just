@@ -1,13 +1,5 @@
 #include "just.h"
 
-uint64_t just::hrtime() {
-  struct timespec t;
-  clock_t clock_id = CLOCK_MONOTONIC;
-  if (clock_gettime(clock_id, &t))
-    return 0;
-  return t.tv_sec * (uint64_t) 1e9 + t.tv_nsec;
-}
-
 void just::SET_METHOD(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, FunctionCallback callback) {
   recv->Set(String::NewFromUtf8(isolate, name, 
@@ -155,7 +147,7 @@ void just::FreeMappedMemory(void* buf, size_t length, void* data) {
 }
 
 int just::CreateIsolate(int argc, char** argv, 
-  uint64_t start, const char* main_src, unsigned int main_len, 
+  const char* main_src, unsigned int main_len, 
   const char* js, unsigned int js_len, struct iovec* buf, int fd) {
   Isolate::CreateParams create_params;
   int statusCode = 0;
@@ -173,7 +165,6 @@ int just::CreateIsolate(int argc, char** argv,
     Local<ObjectTemplate> just = ObjectTemplate::New(isolate);
     SET_METHOD(isolate, just, "print", just::Print);
     SET_METHOD(isolate, just, "error", just::Error);
-    SET_VALUE(isolate, just, "START", BigInt::New(isolate, start));
 
     just::Init(isolate, just);
 
@@ -285,8 +276,8 @@ int just::CreateIsolate(int argc, char** argv,
   return statusCode;
 }
 
-int just::CreateIsolate(int argc, char** argv, uint64_t start, const char* main_src, unsigned int main_len) {
-  return CreateIsolate(argc, argv, start, main_src, main_len, NULL, 0, NULL, 0);
+int just::CreateIsolate(int argc, char** argv, const char* main_src, unsigned int main_len) {
+  return CreateIsolate(argc, argv, main_src, main_len, NULL, 0, NULL, 0);
 }
 
 void just::DLOpen(const FunctionCallbackInfo<Value> &args) {
@@ -363,10 +354,10 @@ void just::Library(const FunctionCallbackInfo<Value> &args) {
 }
 
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
-  Local<ObjectTemplate> versions = ObjectTemplate::New(isolate);
-  SET_VALUE(isolate, versions, "just", String::NewFromUtf8Literal(isolate, 
+  Local<ObjectTemplate> version = ObjectTemplate::New(isolate);
+  SET_VALUE(isolate, version, "just", String::NewFromUtf8Literal(isolate, 
     JUST_VERSION));
-  SET_VALUE(isolate, versions, "v8", String::NewFromUtf8(isolate, 
+  SET_VALUE(isolate, version, "v8", String::NewFromUtf8(isolate, 
     v8::V8::GetVersion()).ToLocalChecked());
   Local<ObjectTemplate> kernel = ObjectTemplate::New(isolate);
   utsname kernel_rec;
@@ -382,7 +373,7 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
       NewStringType::kNormal), String::NewFromUtf8(isolate, 
       kernel_rec.version).ToLocalChecked());
   }
-  versions->Set(String::NewFromUtf8Literal(isolate, "kernel", 
+  version->Set(String::NewFromUtf8Literal(isolate, "kernel", 
     NewStringType::kNormal), kernel);
   Local<ObjectTemplate> sys = ObjectTemplate::New(isolate);
   SET_METHOD(isolate, sys, "dlopen", DLOpen);
@@ -393,5 +384,5 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, sys, "RTLD_LAZY", Integer::New(isolate, RTLD_LAZY));
   SET_VALUE(isolate, sys, "RTLD_NOW", Integer::New(isolate, RTLD_NOW));
   SET_MODULE(isolate, target, "sys", sys);
-  SET_MODULE(isolate, target, "versions", versions);
+  SET_MODULE(isolate, target, "version", version);
 }

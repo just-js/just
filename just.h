@@ -67,14 +67,12 @@ typedef void *(*register_plugin)();
 using InitializerCallback = void (*)(Isolate* isolate, Local<ObjectTemplate> exports);
 
 int CreateIsolate(int argc, char** argv, 
-  uint64_t start, const char* main, unsigned int main_len,
+  const char* main, unsigned int main_len,
   const char* js, unsigned int js_len, struct iovec* buf, int fd);
 int CreateIsolate(int argc, char** argv,
-  uint64_t start, const char* main, unsigned int main_len);
+  const char* main, unsigned int main_len);
 void PromiseRejectCallback(PromiseRejectMessage message);
 
-ssize_t process_memory_usage();
-uint64_t hrtime();
 void SET_METHOD(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, FunctionCallback callback);
 void SET_MODULE(Isolate *isolate, Local<ObjectTemplate> 
@@ -89,6 +87,7 @@ void Error(const FunctionCallbackInfo<Value> &args);
 void FreeMemory(void* buf, size_t length, void* data);
 void UnwrapMemory(void* buf, size_t length, void* data);
 void FreeMappedMemory(void* buf, size_t length, void* data);
+void HRTime(const FunctionCallbackInfo<Value> &args);
 void DLOpen(const FunctionCallbackInfo<Value> &args);
 void DLSym(const FunctionCallbackInfo<Value> &args);
 void DLClose(const FunctionCallbackInfo<Value> &args);

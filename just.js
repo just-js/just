@@ -103,8 +103,8 @@ function wrapRequire (handle, cache = {}) {
     if (!handle) return
     const ptr = just.sys.dlsym(handle, `_register_${name}`)
     if (!ptr) return
-    just.sys.dlclose()
     const lib = just.sys.library(ptr)
+    just.sys.dlclose(handle)
     if (!lib) return
     cache[path] = lib
     return lib
@@ -138,7 +138,10 @@ function wrapRequire (handle, cache = {}) {
     const params = ['exports', 'require', 'module']
     const exports = {}
     const module = { exports, type: 'native' }
-    module.text = builtin(path).readString()
+    const lib = builtin(path)
+    if (!lib) return
+    module.buf = lib
+    module.text = lib.readString()
     if (!module.text) return
     const fun = vm.compile(module.text, path, params, [])
     module.function = fun
@@ -219,24 +222,14 @@ function setNonBlocking (fd) {
 function main () {
   const handle = just.sys.dlopen()
   const { library, requireNative, require, cache } = wrapRequire(handle)
+
   // load the builtin modules
   just.vm = library('vm').vm
   just.loop = library('epoll').epoll
   just.fs = library('fs').fs
   just.net = library('net').net
-  just.setTimeout = setTimeout
-  just.setInterval = setInterval
   Object.assign(just.sys, library('sys').sys)
-  just.env = wrapEnv(just.sys.env)
-  just.memoryUsage = wrapMemoryUsage(just.sys.memoryUsage)
-  just.cpuUsage = wrapCpuUsage(just.sys.cpuUsage)
-  just.rUsage = wrapgetrUsage(just.sys.getrUsage)
-  just.heapUsage = wrapHeapUsage(just.sys.heapUsage)
-  just.hrtime = wrapHrtime(just.sys.hrtime)
-  just.clearTimeout = just.clearInterval = clearTimeout
-  just.SystemError = SystemError
-  just.library = library
-  just.requireNative = requireNative
+
   ArrayBuffer.prototype.writeString = function(str, off = 0) { // eslint-disable-line
     return just.sys.writeString(this, str, off)
   }
@@ -251,17 +244,84 @@ function main () {
   }
   ArrayBuffer.fromString = str => just.sys.calloc(1, str)
   String.byteLength = just.sys.utf8Length
-  just.factory = requireNative('loop').factory
-  just.sys.setNonBlocking = setNonBlocking
-  just.path = requireNative('path')
+
   Object.assign(just.fs, requireNative('fs'))
+  just.path = requireNative('path')
+  just.factory = requireNative('loop').factory
   just.factory.loop = just.factory.create(1024)
+  just.process = requireNative('process')
+
+  just.setTimeout = setTimeout
+  just.setInterval = setInterval
+  just.clearTimeout = just.clearInterval = clearTimeout
+  just.SystemError = SystemError
+  just.library = library
+  just.requireNative = requireNative
+  just.sys.setNonBlocking = setNonBlocking
   just.require = global.require = require
   just.require.cache = cache
   just.handle = handle // convenience
-  just.process = requireNative('process')
-  just.path.scriptName = just.path.join(just.sys.cwd(), just.args[1])
-  just.vm.runScript(`(function() {${just.fs.readFile(just.args[1])}})()`, just.path.scriptName)
+  just.waitForInspector = false
+
+  just.env = wrapEnv(just.sys.env)
+  just.memoryUsage = wrapMemoryUsage(just.sys.memoryUsage)
+  just.cpuUsage = wrapCpuUsage(just.sys.cpuUsage)
+  just.rUsage = wrapgetrUsage(just.sys.getrUsage)
+  just.heapUsage = wrapHeapUsage(just.sys.heapUsage)
+  just.hrtime = wrapHrtime(just.sys.hrtime)
+
+  delete global.console
+
+  just.args = just.args.filter(arg => {
+    const found = (arg === '--inspector')
+    if (found) just.waitForInspector = true
+    return !found
+  })
+
+  function startup () {
+    if (just.workerSource) {
+      just.path.scriptName = just.path.join(just.sys.cwd(), just.args[0] || 'thread')
+      const source = just.workerSource
+      delete just.workerSource
+      just.vm.runScript(`(function() {${source}})()`, just.args[0])
+      return
+    }
+    if (just.args.length === 1) {
+      just.path.scriptName = 'repl'
+      const replModule = just.require('repl')
+      if (!replModule) {
+        throw new Error('REPL not enabled. Maybe I should be a standalone?')
+      }
+      replModule.repl()
+      return
+    }
+    if (just.args[1] === 'eval') {
+      just.path.scriptName = 'eval'
+      just.vm.runScript(`(function() {${just.args[2]}})()`, just.path.scriptName)
+      return
+    }
+    if (just.args[1] === 'build') {
+      throw new Error('Build Not Implemented')
+    }
+    just.path.scriptName = just.path.join(just.sys.cwd(), just.args[1])
+    just.vm.runScript(`(function() {${just.fs.readFile(just.args[1])}})()`, just.path.scriptName)
+  }
+
+  if (just.waitForInspector) {
+    just.inspector = just.library('inspector').inspector
+    if (!just.inspector) throw new SystemError('Cannot Load Inspector')
+    Object.assign(just.inspector, require('inspector'))
+    just.encode = library('encode').encode
+    just.sha1 = library('sha1').sha1
+    global.inspector = just.inspector.createInspector({
+      title: 'Just!',
+      onReady: startup
+    })
+    just.inspector.enable()
+    just.factory.run()
+    return
+  }
+  startup()
   just.factory.run()
 }
 
