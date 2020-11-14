@@ -289,13 +289,12 @@ int just::CreateIsolate(int argc, char** argv, uint64_t start, const char* main_
   return CreateIsolate(argc, argv, start, main_src, main_len, NULL, 0, NULL, 0);
 }
 
-#ifdef SHARED
 void just::DLOpen(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
   int argc = args.Length();
-  int mode = RTLD_NOW;
+  int mode = RTLD_LAZY;
   void* handle;
   if (argc > 1) {
     mode = args[1]->Int32Value(context).ToChecked();
@@ -396,5 +395,3 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_MODULE(isolate, target, "sys", sys);
   SET_MODULE(isolate, target, "versions", versions);
 }
-
-#endif

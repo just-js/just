@@ -1,11 +1,11 @@
 CC=g++
 RELEASE=0.0.6
 INSTALL=/usr/local/bin
-LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/config.js ${MAIN}
+MAIN=just.js
+LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/config.js
 MODULES=modules/net/net.o modules/epoll/epoll.o modules/fs/fs.o modules/sys/sys.o modules/vm/vm.o
 TARGET=just
 LIB=
-MAIN=just.js
 
 .PHONY: help clean
 
@@ -31,7 +31,7 @@ module-debug: modules ## build a debug version of a shared library for a module
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ library-debug
 
 builtins: deps just.cc just.h Makefile main.cc ${MAIN} ## compile builtins with build dependencies
-	ld -r -b binary just.cc just.h Makefile main.cc ${LIBS} -o builtins.o
+	ld -r -b binary just.cc just.h Makefile main.cc ${MAIN} ${LIBS} -o builtins.o
 
 deps: ## download v8 lib and headers
 	mkdir -p deps
@@ -58,8 +58,8 @@ runtime: modules builtins deps ## build dynamic runtime
 	make MODULE=epoll module
 	make MODULE=vm module
 	make MODULE=fs module
-	$(CC) -c -DJUST_VERSION='"${RELEASE}"' -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
+	$(CC) -c -DJUST_VERSION='"${RELEASE}"' -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
+	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
 	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group -ldl -lrt ${LIB} -o ${TARGET}
 
 runtime-debug: modules builtins deps ## build debug version of runtime
@@ -68,8 +68,8 @@ runtime-debug: modules builtins deps ## build debug version of runtime
 	make MODULE=epoll module-debug
 	make MODULE=vm module-debug
 	make MODULE=fs module-debug
-	$(CC) -c -DJUST_VERSION='"${RELEASE}"' -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c -DSHARED -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
+	$(CC) -c -DJUST_VERSION='"${RELEASE}"' -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
+	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
 	$(CC) -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group -ldl -lrt ${LIB} -o ${TARGET}
 
 clean: ## tidy up

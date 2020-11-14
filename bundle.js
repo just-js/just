@@ -2,7 +2,7 @@ const { launch, watch } = just.process
 const { isDir, readFileBytes, writeFile } = require('fs')
 
 function make (...args) {
-  return watch(launch('make', ['C=ccache gcc', 'CC=ccache g++', ...args], justDir))
+  return watch(launch('make', ['C=gcc', 'CC=g++', ...args], justDir))
 }
 
 async function run (configName = 'config.js') {
@@ -14,7 +14,7 @@ async function run (configName = 'config.js') {
   if (modules.length && !isDir('modules')) {
     await make('modules')
   }
-  //await make(`TARGET=${target}`, 'clean')
+  await make(`TARGET=${target}`, 'clean')
   for (const module of modules) {
     await make(`MODULE=${module.name}`, 'module')
   }
