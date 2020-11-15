@@ -57,4 +57,6 @@ const modules = [{
 const target = 'debugger'
 const main = 'just.js'
 
-module.exports = { version, libs, modules, capabilities, target, main, v8flags }
+const embeds = []
+
+module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds }
