@@ -1,10 +1,11 @@
 CC=g++
 RELEASE=0.0.6
 INSTALL=/usr/local/bin
-LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/config.js
+LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/build.js
 MODULES=modules/net/net.o modules/epoll/epoll.o modules/fs/fs.o modules/sys/sys.o modules/vm/vm.o
 TARGET=just
 LIB=
+EMBEDS=just.cc just.h Makefile main.cc
 
 .PHONY: help clean
 
@@ -30,7 +31,7 @@ module-debug: modules ## build a debug version of a shared library for a module
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ library-debug
 
 builtins: deps just.cc just.h Makefile main.cc ## compile builtins with build dependencies
-	ld -r -b binary just.cc just.h Makefile main.cc ${LIBS} -o builtins.o
+	ld -r -b binary ${EMBEDS} ${LIBS} -o builtins.o
 
 deps: ## download v8 lib and headers
 	mkdir -p deps

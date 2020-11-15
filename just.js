@@ -246,6 +246,7 @@ function main () {
   String.byteLength = just.sys.utf8Length
 
   Object.assign(just.fs, requireNative('fs'))
+  just.config = requireNative('config')
   just.path = requireNative('path')
   just.factory = requireNative('loop').factory
   just.factory.loop = just.factory.create(1024)
@@ -283,7 +284,7 @@ function main () {
       just.path.scriptName = just.path.join(just.sys.cwd(), just.args[0] || 'thread')
       const source = just.workerSource
       delete just.workerSource
-      just.vm.runScript(`(function() {${source}})()`, just.args[0])
+      just.vm.runScript(`(function() {${source}})()`, just.path.scriptName)
       return
     }
     if (just.args.length === 1) {
@@ -295,13 +296,34 @@ function main () {
       replModule.repl()
       return
     }
+    if (just.args[1] === '--') {
+      // todo: limit size
+      // todo: allow streaming in multiple scripts with a separator and running them all
+      const buf = new ArrayBuffer(4096)
+      const chunks = []
+      let bytes = just.net.read(just.sys.STDIN_FILENO, buf)
+      while (bytes > 0) {
+        chunks.push(buf.readString(bytes))
+        bytes = just.net.read(just.sys.STDIN_FILENO, buf)
+      }
+      just.vm.runScript(`(function() {${chunks.join('')}})()`, 'stdin')
+      return
+    }
     if (just.args[1] === 'eval') {
       just.path.scriptName = 'eval'
       just.vm.runScript(`(function() {${just.args[2]}})()`, just.path.scriptName)
       return
     }
     if (just.args[1] === 'build') {
-      throw new Error('Build Not Implemented')
+      just.path.scriptName = 'build'
+      const buildModule = just.require('build')
+      if (!buildModule) throw new Error('Build not Available')
+      const { run } = buildModule
+      const config = require(just.args[2] || 'config/runtime.js')
+      config.justDir = just.env().JUST_TARGET || just.sys.cwd()
+      run(config, ...just.args.slice(3))
+        .catch(err => just.error(err.stack))
+      return
     }
     just.path.scriptName = just.path.join(just.sys.cwd(), just.args[1])
     just.vm.runScript(`(function() {${just.fs.readFile(just.args[1])}})()`, just.path.scriptName)
