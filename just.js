@@ -1,5 +1,5 @@
 function wrapMemoryUsage (memoryUsage) {
-  const mem = new Float64Array(16)
+  const mem = new BigUint64Array(16)
   return () => {
     memoryUsage(mem)
     return {

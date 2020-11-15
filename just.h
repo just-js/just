@@ -62,6 +62,7 @@ using v8::PromiseRejectMessage;
 using v8::Promise;
 using v8::PromiseRejectEvent;
 using v8::Uint32Array;
+using v8::BigUint64Array;
 
 typedef void *(*register_plugin)();
 using InitializerCallback = void (*)(Isolate* isolate, Local<ObjectTemplate> exports);
