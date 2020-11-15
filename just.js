@@ -128,7 +128,7 @@ function wrapRequire (handle, cache = {}) {
     const buf = just.sys.readMemory(start, end)
     if (!buf) return
     if (!buf.byteLength) return
-    return buf
+    return buf.slice()
   }
 
   function requireNative (path) {
@@ -140,7 +140,6 @@ function wrapRequire (handle, cache = {}) {
     const module = { exports, type: 'native' }
     const lib = builtin(path)
     if (!lib) return
-    module.buf = lib
     module.text = lib.readString()
     if (!module.text) return
     const fun = vm.compile(module.text, path, params, [])
@@ -222,7 +221,7 @@ function setNonBlocking (fd) {
 
 function main () {
   const handle = just.sys.dlopen()
-  const { library, requireNative, require, cache } = wrapRequire(handle)
+  const { library, requireNative, require, cache, builtin } = wrapRequire(handle)
 
   // load the builtin modules
   just.vm = library('vm').vm
@@ -259,6 +258,7 @@ function main () {
   just.SystemError = SystemError
   just.library = library
   just.requireNative = requireNative
+  just.builtin = builtin
   just.sys.setNonBlocking = setNonBlocking
   just.require = global.require = require
   just.require.cache = cache
@@ -284,7 +284,7 @@ function main () {
     if (just.workerSource) {
       just.path.scriptName = just.path.join(just.sys.cwd(), just.args[0] || 'thread')
       const source = just.workerSource
-      delete just.workerSource
+      //delete just.workerSource
       just.vm.runScript(`(function() {${source}})()`, just.path.scriptName)
       return
     }

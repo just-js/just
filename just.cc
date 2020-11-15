@@ -190,9 +190,11 @@ int just::CreateIsolate(int argc, char** argv,
         NewStringType::kNormal)).ToLocalChecked();
     Local<Object> justInstance = Local<Object>::Cast(obj);
     if (buf != NULL) {
+      // this is memory allocated in the calling isolate so we only want
+      // to unwrap it, not free it when it goes out of scope
       std::unique_ptr<BackingStore> backing =
           SharedArrayBuffer::NewBackingStore(buf->iov_base, buf->iov_len, 
-          just::FreeMemory, nullptr);
+          just::UnwrapMemory, nullptr);
       Local<SharedArrayBuffer> ab =
           SharedArrayBuffer::New(isolate, std::move(backing));
       justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
