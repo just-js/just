@@ -157,6 +157,7 @@ function wrapRequire (handle, cache = {}) {
       let dirName = parent ? parent.dirName : baseName(join(just.sys.cwd(), just.args[1] || './'))
       const fileName = join(dirName, path)
       if (cache[fileName]) return cache[fileName].exports
+      if (!just.fs.isFile(fileName)) return
       dirName = baseName(fileName)
       const params = ['exports', 'require', 'module']
       const exports = {}
@@ -319,7 +320,7 @@ function main () {
       const buildModule = just.require('build')
       if (!buildModule) throw new Error('Build not Available')
       const { run } = buildModule
-      const config = require(just.args[2] || 'config/runtime.js')
+      const config = require(just.args[2] || 'config.js') || {}
       config.justDir = just.env().JUST_TARGET || just.sys.cwd()
       run(config, ...just.args.slice(3))
         .catch(err => just.error(err.stack))

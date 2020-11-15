@@ -280,6 +280,7 @@ int just::CreateIsolate(int argc, char** argv, const char* main_src, unsigned in
   return CreateIsolate(argc, argv, main_src, main_len, NULL, 0, NULL, 0);
 }
 
+#ifndef JUST_NO_SYS
 void just::DLOpen(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -352,6 +353,7 @@ void just::Library(const FunctionCallbackInfo<Value> &args) {
   _register(isolate, exports);
   args.GetReturnValue().Set(exports->NewInstance(context).ToLocalChecked());
 }
+#endif
 
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   Local<ObjectTemplate> version = ObjectTemplate::New(isolate);
@@ -375,6 +377,7 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   }
   version->Set(String::NewFromUtf8Literal(isolate, "kernel", 
     NewStringType::kNormal), kernel);
+#ifndef JUST_NO_SYS
   Local<ObjectTemplate> sys = ObjectTemplate::New(isolate);
   SET_METHOD(isolate, sys, "dlopen", DLOpen);
   SET_METHOD(isolate, sys, "dlsym", DLSym);
@@ -384,5 +387,6 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_VALUE(isolate, sys, "RTLD_LAZY", Integer::New(isolate, RTLD_LAZY));
   SET_VALUE(isolate, sys, "RTLD_NOW", Integer::New(isolate, RTLD_NOW));
   SET_MODULE(isolate, target, "sys", sys);
+#endif
   SET_MODULE(isolate, target, "version", version);
 }

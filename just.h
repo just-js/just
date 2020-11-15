@@ -87,12 +87,13 @@ void Error(const FunctionCallbackInfo<Value> &args);
 void FreeMemory(void* buf, size_t length, void* data);
 void UnwrapMemory(void* buf, size_t length, void* data);
 void FreeMappedMemory(void* buf, size_t length, void* data);
-void HRTime(const FunctionCallbackInfo<Value> &args);
+#ifndef JUST_NO_SYS
 void DLOpen(const FunctionCallbackInfo<Value> &args);
 void DLSym(const FunctionCallbackInfo<Value> &args);
 void DLClose(const FunctionCallbackInfo<Value> &args);
 void DLError(const FunctionCallbackInfo<Value> &args);
 void Library(const FunctionCallbackInfo<Value> &args);
+#endif
 void Init(Isolate* isolate, Local<ObjectTemplate> target);
 
 }

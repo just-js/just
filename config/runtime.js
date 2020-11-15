@@ -41,9 +41,9 @@ const modules = [{
 
 const embeds = [
   'just.cc',
-  'just.h',
   'Makefile',
   'main.cc',
+  'just.h',
   'just.js',
   'lib/inspector.js',
   'lib/websocket.js',
