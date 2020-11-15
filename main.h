@@ -889,3 +889,6 @@ static const char just_js[] = {
 0x0a, 0x0a, 0x6d, 0x61, 0x69, 0x6e, 0x28, 0x29, 0x0a, 
 };
 static unsigned int just_js_len = 10653;
+static unsigned int _use_index = 0;
+static const char* index_js = NULL;
+static unsigned int index_js_len = 0;
