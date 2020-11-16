@@ -96,7 +96,9 @@ function wrapEnv (env) {
   }
 }
 
-function wrapRequire (handle, cache = {}) {
+function wrapRequire (cache = {}) {
+  const handle = just.sys.dlopen()
+
   function loadLibrary (path, name) {
     if (cache[path]) return cache[path]
     const handle = just.sys.dlopen(path, just.sys.RTLD_LAZY)
@@ -110,6 +112,8 @@ function wrapRequire (handle, cache = {}) {
     return lib
   }
 
+  // todo: for a static build, we could generate the c/c++ to import these and
+  // avoid having to use dlopen/dlsym
   function library (name, path) {
     if (path) return loadLibrary(path, name)
     if (cache[name]) return cache[name]
@@ -220,8 +224,7 @@ function setNonBlocking (fd) {
 }
 
 function main () {
-  const handle = just.sys.dlopen()
-  const { library, requireNative, require, cache, builtin } = wrapRequire(handle)
+  const { library, requireNative, require, cache, builtin } = wrapRequire()
 
   // load the builtin modules
   just.vm = library('vm').vm
@@ -262,7 +265,6 @@ function main () {
   just.sys.setNonBlocking = setNonBlocking
   just.require = global.require = require
   just.require.cache = cache
-  just.handle = handle // convenience
   just.waitForInspector = false
 
   just.env = wrapEnv(just.sys.env)
@@ -284,7 +286,7 @@ function main () {
     if (just.workerSource) {
       just.path.scriptName = just.path.join(just.sys.cwd(), just.args[0] || 'thread')
       const source = just.workerSource
-      //delete just.workerSource
+      delete just.workerSource
       just.vm.runScript(`(function() {${source}})()`, just.path.scriptName)
       return
     }
