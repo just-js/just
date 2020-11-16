@@ -234,9 +234,9 @@ function main () {
   just.config = requireNative('config')
   just.path = requireNative('path')
   just.factory = requireNative('loop').factory
+  just.factory.loop = just.factory.create(1024)
   just.process = requireNative('process')
 
-  just.factory.loop = just.factory.create(1024)
   just.setTimeout = setTimeout
   just.setInterval = setInterval
   just.clearTimeout = just.clearInterval = clearTimeout
