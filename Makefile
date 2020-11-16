@@ -5,7 +5,7 @@ LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/build.js lib/repl.js
 MODULES=modules/net/net.o modules/epoll/epoll.o modules/fs/fs.o modules/sys/sys.o modules/vm/vm.o
 TARGET=just
 LIB=
-EMBEDS=just.cc just.h Makefile main.cc
+EMBEDS=just.cc just.h Makefile main.cc lib/websocket.js lib/inspector.js just.js
 FLAGS=
 
 .PHONY: help clean
@@ -56,7 +56,7 @@ v8src: ## download the v8 source for this release
 main: modules builtins deps
 	$(CC) -c ${FLAGS} -DJUST_VERSION='"${RELEASE}"' -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
 	$(CC) -c -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -s -rdynamic -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group -ldl -lrt ${LIB} -o ${TARGET}
+	$(CC) -s -rdynamic -static-libstdc++ -static-libgcc -pie -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group -ldl -lrt ${LIB} -o ${TARGET}
 
 main-static: modules builtins deps
 	$(CC) -c ${FLAGS} -DJUST_VERSION='"${RELEASE}"' -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
