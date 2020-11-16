@@ -97,42 +97,26 @@ function wrapEnv (env) {
 }
 
 function wrapRequire (cache = {}) {
-  const handle = just.sys.dlopen()
-
   function loadLibrary (path, name) {
     if (cache[path]) return cache[path]
     const handle = just.sys.dlopen(path, just.sys.RTLD_LAZY)
     if (!handle) return
     const ptr = just.sys.dlsym(handle, `_register_${name}`)
     if (!ptr) return
-    const lib = just.sys.library(ptr)
+    const lib = just.library(ptr)
     just.sys.dlclose(handle)
     if (!lib) return
     cache[path] = lib
     return lib
   }
 
-  // todo: for a static build, we could generate the c/c++ to import these and
-  // avoid having to use dlopen/dlsym
   function library (name, path) {
     if (path) return loadLibrary(path, name)
     if (cache[name]) return cache[name]
-    const lib = just.sys.library(just.sys.dlsym(handle, `_register_${name}`))
+    const lib = just.load(name)
     if (!lib) return
     cache[name] = lib
     return lib
-  }
-
-  function builtin (path) {
-    path = path.replace(/[./]/g, '_')
-    const start = just.sys.dlsym(handle, `_binary_${path}_start`)
-    if (!start) return
-    const end = just.sys.dlsym(handle, `_binary_${path}_end`)
-    if (!end) return
-    const buf = just.sys.readMemory(start, end)
-    if (!buf) return
-    if (!buf.byteLength) return
-    return buf.slice()
   }
 
   function requireNative (path) {
@@ -142,9 +126,7 @@ function wrapRequire (cache = {}) {
     const params = ['exports', 'require', 'module']
     const exports = {}
     const module = { exports, type: 'native' }
-    const lib = builtin(path)
-    if (!lib) return
-    module.text = lib.readString()
+    module.text = just.builtin(path)
     if (!module.text) return
     const fun = vm.compile(module.text, path, params, [])
     module.function = fun
@@ -179,7 +161,7 @@ function wrapRequire (cache = {}) {
     return just.requireNative(path, parent)
   }
 
-  return { library, builtin, requireNative, require, cache }
+  return { library, requireNative, require, cache }
 }
 
 function setTimeout (callback, timeout, repeat = 0, loop = just.factory.loop) {
@@ -224,14 +206,14 @@ function setNonBlocking (fd) {
 }
 
 function main () {
-  const { library, requireNative, require, cache, builtin } = wrapRequire()
+  const { library, requireNative, require, cache } = wrapRequire()
 
   // load the builtin modules
   just.vm = library('vm').vm
   just.loop = library('epoll').epoll
   just.fs = library('fs').fs
   just.net = library('net').net
-  Object.assign(just.sys, library('sys').sys)
+  just.sys = library('sys').sys
 
   ArrayBuffer.prototype.writeString = function(str, off = 0) { // eslint-disable-line
     return just.sys.writeString(this, str, off)
@@ -252,16 +234,15 @@ function main () {
   just.config = requireNative('config')
   just.path = requireNative('path')
   just.factory = requireNative('loop').factory
-  just.factory.loop = just.factory.create(1024)
   just.process = requireNative('process')
 
+  just.factory.loop = just.factory.create(1024)
   just.setTimeout = setTimeout
   just.setInterval = setInterval
   just.clearTimeout = just.clearInterval = clearTimeout
   just.SystemError = SystemError
   just.library = library
   just.requireNative = requireNative
-  just.builtin = builtin
   just.sys.setNonBlocking = setNonBlocking
   just.require = global.require = require
   just.require.cache = cache

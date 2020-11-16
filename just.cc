@@ -1,5 +1,16 @@
 #include "just.h"
 
+std::map<std::string, just::builtin*> just::builtins;
+std::map<std::string, just::register_plugin> just::modules;
+
+void just::builtins_add (const char* name, const char* source, 
+  unsigned int size) {
+  struct builtin* b = new builtin();
+  b->size = size;
+  b->source = source;
+  builtins[name] = b;
+}
+
 void just::SET_METHOD(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, FunctionCallback callback) {
   recv->Set(String::NewFromUtf8(isolate, name, 
@@ -159,18 +170,11 @@ int just::CreateIsolate(int argc, char** argv,
     HandleScope handle_scope(isolate);
     isolate->SetCaptureStackTraceForUncaughtExceptions(true, 1000, 
       StackTrace::kDetailed);
-
     Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
-
     Local<ObjectTemplate> just = ObjectTemplate::New(isolate);
-    SET_METHOD(isolate, just, "print", just::Print);
-    SET_METHOD(isolate, just, "error", just::Error);
-
     just::Init(isolate, just);
-
     global->Set(String::NewFromUtf8Literal(isolate, "just", 
       NewStringType::kNormal), just);
-
     Local<Context> context = Context::New(isolate, NULL, global);
     Context::Scope context_scope(context);
     context->AllowCodeGenerationFromStrings(false);
@@ -282,80 +286,48 @@ int just::CreateIsolate(int argc, char** argv, const char* main_src, unsigned in
   return CreateIsolate(argc, argv, main_src, main_len, NULL, 0, NULL, 0);
 }
 
-#ifndef JUST_NO_SYS
-void just::DLOpen(const FunctionCallbackInfo<Value> &args) {
+void just::Load(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
-  int argc = args.Length();
-  int mode = RTLD_LAZY;
-  void* handle;
-  if (argc > 1) {
-    mode = args[1]->Int32Value(context).ToChecked();
-  }
-  if (argc > 0) {
-    String::Utf8Value path(isolate, args[0]);
-    handle = dlopen(*path, mode);
-    //if (handle == NULL) handle = dlopen(NULL, mode);
-  } else {
-    handle = dlopen(NULL, mode);
-  }
-  if (handle == NULL) {
-    args.GetReturnValue().Set(v8::Null(isolate));
-    return;
-  }
-  args.GetReturnValue().Set(BigInt::New(isolate, (uint64_t)handle));
-}
-
-void just::DLSym(const FunctionCallbackInfo<Value> &args) {
-  Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
-  Local<BigInt> address64 = Local<BigInt>::Cast(args[0]);
-  // todo: this is very dangerous. need to have a think on how best to do this
-  void* handle = reinterpret_cast<void*>(address64->Uint64Value());
-  String::Utf8Value name(isolate, args[1]);
-  void* ptr = dlsym(handle, *name);
-  if (ptr == NULL) {
-    args.GetReturnValue().Set(v8::Null(isolate));
-    return;
-  }
-  args.GetReturnValue().Set(BigInt::New(isolate, (uint64_t)ptr));
-}
-
-void just::DLError(const FunctionCallbackInfo<Value> &args) {
-  Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
-  char* err = dlerror();
-  if (err == NULL) {
-    args.GetReturnValue().Set(v8::Null(isolate));
-    return;
-  }
-  args.GetReturnValue().Set(String::NewFromUtf8(isolate, err, 
-    NewStringType::kNormal).ToLocalChecked());
-}
-
-void just::DLClose(const FunctionCallbackInfo<Value> &args) {
-  Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
-  Local<BigInt> address64 = Local<BigInt>::Cast(args[0]);
-  void* handle = reinterpret_cast<void*>(address64->Uint64Value());
-  int r = dlclose(handle);
-  args.GetReturnValue().Set(Integer::New(isolate, r));
-}
-
-void just::Library(const FunctionCallbackInfo<Value> &args) {
-  Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
-  Local<Context> context = isolate->GetCurrentContext();
-  Local<BigInt> address64 = Local<BigInt>::Cast(args[0]);
-  void* ptr = reinterpret_cast<void*>(address64->Uint64Value());
-  register_plugin _init = reinterpret_cast<register_plugin>(ptr);
-  auto _register = reinterpret_cast<InitializerCallback>(_init());
   Local<ObjectTemplate> exports = ObjectTemplate::New(isolate);
-  _register(isolate, exports);
+  if (args[0]->IsString()) {
+    String::Utf8Value name(isolate, args[0]);
+/*    
+    auto iter = just::modules.find(*name);
+    if (iter == just::modules.end()) {
+      fprintf(stderr, "not found %s\n", *name);
+    } else {
+      register_plugin _init = (*iter->second);
+      auto _register = reinterpret_cast<InitializerCallback>(_init());
+      _register(isolate, exports);
+    }
+*/
+    register_plugin _init = *just::modules[*name];
+    auto _register = reinterpret_cast<InitializerCallback>(_init());
+    _register(isolate, exports);
+  } else {
+    Local<BigInt> address64 = Local<BigInt>::Cast(args[0]);
+    void* ptr = reinterpret_cast<void*>(address64->Uint64Value());
+    register_plugin _init = reinterpret_cast<register_plugin>(ptr);
+    auto _register = reinterpret_cast<InitializerCallback>(_init());
+    _register(isolate, exports);
+  }
   args.GetReturnValue().Set(exports->NewInstance(context).ToLocalChecked());
 }
-#endif
+
+void just::Builtin(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  String::Utf8Value name(isolate, args[0]);
+  just::builtin* b = builtins[*name];
+  if (b == nullptr) {
+    args.GetReturnValue().Set(Null(isolate));
+    return;
+  }
+  args.GetReturnValue().Set(String::NewFromUtf8(isolate, b->source, 
+    NewStringType::kNormal, b->size).ToLocalChecked());
+}
 
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   Local<ObjectTemplate> version = ObjectTemplate::New(isolate);
@@ -379,16 +351,9 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   }
   version->Set(String::NewFromUtf8Literal(isolate, "kernel", 
     NewStringType::kNormal), kernel);
-#ifndef JUST_NO_SYS
-  Local<ObjectTemplate> sys = ObjectTemplate::New(isolate);
-  SET_METHOD(isolate, sys, "dlopen", DLOpen);
-  SET_METHOD(isolate, sys, "dlsym", DLSym);
-  SET_METHOD(isolate, sys, "dlerror", DLError);
-  SET_METHOD(isolate, sys, "dlclose", DLClose);
-  SET_METHOD(isolate, sys, "library", Library);
-  SET_VALUE(isolate, sys, "RTLD_LAZY", Integer::New(isolate, RTLD_LAZY));
-  SET_VALUE(isolate, sys, "RTLD_NOW", Integer::New(isolate, RTLD_NOW));
-  SET_MODULE(isolate, target, "sys", sys);
-#endif
+  SET_METHOD(isolate, target, "print", Print);
+  SET_METHOD(isolate, target, "error", Error);
+  SET_METHOD(isolate, target, "load", Load);
+  SET_METHOD(isolate, target, "builtin", Builtin);
   SET_MODULE(isolate, target, "version", version);
 }

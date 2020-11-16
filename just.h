@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include <dlfcn.h>
 #include <sys/utsname.h>
 
 namespace just {
@@ -65,14 +64,29 @@ using v8::Uint32Array;
 using v8::BigUint64Array;
 
 typedef void *(*register_plugin)();
+struct builtin {
+  unsigned int size;
+  const char* source;
+};
+extern std::map<std::string, builtin*> builtins;
+extern std::map<std::string, register_plugin> modules;
+void builtins_add (const char* name, const char* source, 
+  unsigned int size);
+
 using InitializerCallback = void (*)(Isolate* isolate, Local<ObjectTemplate> exports);
+MaybeLocal<Module> OnModuleInstantiate(Local<Context> context, 
+  Local<String> specifier, Local<Module> referrer);
 
 int CreateIsolate(int argc, char** argv, 
   const char* main, unsigned int main_len,
   const char* js, unsigned int js_len, struct iovec* buf, int fd);
 int CreateIsolate(int argc, char** argv,
   const char* main, unsigned int main_len);
+void PrintStackTrace(Isolate* isolate, const TryCatch& try_catch);
 void PromiseRejectCallback(PromiseRejectMessage message);
+void FreeMemory(void* buf, size_t length, void* data);
+void UnwrapMemory(void* buf, size_t length, void* data);
+void FreeMappedMemory(void* buf, size_t length, void* data);
 
 void SET_METHOD(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, FunctionCallback callback);
@@ -80,21 +94,12 @@ void SET_MODULE(Isolate *isolate, Local<ObjectTemplate>
   recv, const char *name, Local<ObjectTemplate> module);
 void SET_VALUE(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, Local<Value> value);
-MaybeLocal<Module> OnModuleInstantiate(Local<Context> context, 
-  Local<String> specifier, Local<Module> referrer);
-void PrintStackTrace(Isolate* isolate, const TryCatch& try_catch);
+
 void Print(const FunctionCallbackInfo<Value> &args);
 void Error(const FunctionCallbackInfo<Value> &args);
-void FreeMemory(void* buf, size_t length, void* data);
-void UnwrapMemory(void* buf, size_t length, void* data);
-void FreeMappedMemory(void* buf, size_t length, void* data);
-#ifndef JUST_NO_SYS
-void DLOpen(const FunctionCallbackInfo<Value> &args);
-void DLSym(const FunctionCallbackInfo<Value> &args);
-void DLClose(const FunctionCallbackInfo<Value> &args);
-void DLError(const FunctionCallbackInfo<Value> &args);
-void Library(const FunctionCallbackInfo<Value> &args);
-#endif
+void Load(const FunctionCallbackInfo<Value> &args);
+void Builtin(const FunctionCallbackInfo<Value> &args);
+
 void Init(Isolate* isolate, Local<ObjectTemplate> target);
 
 }

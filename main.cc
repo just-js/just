@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
   //v8::V8::SetFlagsFromString("--abort-on-uncaught-exception --stack-trace-limit=10 --use-strict --disallow-code-generation-from-strings");
   v8::V8::SetFlagsFromString("--stack-trace-limit=10 --use-strict --disallow-code-generation-from-strings");
   v8::V8::SetFlagsFromCommandLine(&argc, argv, true);
+  register_builtins();
   if (_use_index) {
     just::CreateIsolate(argc, argv, just_js, just_js_len, 
       index_js, index_js_len, 
