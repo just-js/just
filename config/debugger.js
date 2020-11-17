@@ -2,21 +2,24 @@ const libs = [
   'lib/fs.js',
   'lib/loop.js',
   'lib/path.js',
+  'lib/process.js',
+  'lib/build.js',
   'lib/websocket.js',
   'lib/inspector.js',
   'lib/repl.js'
 ]
 
-const version = '0.0.6'
+const version = just.version.just
 const v8flags = ''
-
+const debug = false
 const capabilities = [] // list of allowed internal modules, api calls etc. TBD
 
 const modules = [{
   name: 'sys',
   obj: [
     'modules/sys/sys.o'
-  ]
+  ],
+  lib: ['dl']
 }, {
   name: 'sha1',
   obj: [
@@ -54,9 +57,17 @@ const modules = [{
   ]
 }]
 
+const embeds = [
+  'just.cc',
+  'Makefile',
+  'main.cc',
+  'just.h',
+  'just.js',
+  'config/runtime.js',
+  'config/debugger.js'
+]
+
 const target = 'debugger'
 const main = 'just.js'
 
-const embeds = []
-
-module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds }
+module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds, static: true, debug }

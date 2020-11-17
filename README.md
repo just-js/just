@@ -91,6 +91,13 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - allow just.library('foo.so') to load internal first and if that fails to try dlopen
 - naming convention for docker images
 - catch all exceptions in c++ and do return codes
+- generate dockerfile/.gitignore/.dockerignore when building a project
+- docker build in makefile (parameterize dockefile)
+- init command to initialize a basic app with a name you provide on command line
+- put all the generated files in '.just'
+- look at gvisor - we could do similar and reduce syscalls to a subset
+- /dev/loop module
+- shared memory module
 
 
 - remove all throws in lib/*.js
