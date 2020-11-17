@@ -87,6 +87,12 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - docker builds
 
 ## Todo
+- figure out how to pass a define to module so we can do a static build without dlopen
+- allow just.library('foo.so') to load internal first and if that fails to try dlopen
+- naming convention for docker images
+- catch all exceptions in c++ and do return codes
+
+
 - remove all throws in lib/*.js
 - add shm operation - https://gist.github.com/garcia556/8231e844a90457c99cc72e5add8388e4
 - add file operations
