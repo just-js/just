@@ -7,6 +7,7 @@ TARGET=just
 LIB=-ldl
 EMBEDS=just.cc just.h Makefile main.cc lib/websocket.js lib/inspector.js just.js config/runtime.js
 FLAGS=
+JUST_HOME=$(shell pwd)
 
 .PHONY: help clean
 
