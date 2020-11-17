@@ -41,7 +41,11 @@ builtins: deps just.cc just.h Makefile main.cc ## compile builtins with build de
 	ld -r -b binary ${EMBEDS} ${LIBS} -o builtins.o
 
 deps: ## download v8 lib and headers
+ifeq (,$(wildcard /etc/alpine-release))
 	curl -L -o v8lib-$(RELEASE).tar.gz https://raw.githubusercontent.com/just-js/libv8/$(RELEASE)/v8.tar.gz
+else
+	curl -L -o v8lib-$(RELEASE).tar.gz https://raw.githubusercontent.com/just-js/libv8/$(RELEASE)/v8-alpine.tar.gz
+endif
 	tar -zxvf v8lib-$(RELEASE).tar.gz
 	rm -f v8lib-$(RELEASE).tar.gz
 
