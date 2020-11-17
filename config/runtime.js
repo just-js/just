@@ -9,7 +9,7 @@ const libs = [
 
 const version = just.version.just
 const v8flags = ''
-
+const debug = false
 const capabilities = [] // list of allowed internal modules, api calls etc. TBD
 
 const modules = [{
@@ -54,4 +54,4 @@ const embeds = [
 const target = 'just'
 const main = 'just.js'
 
-module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds }
+module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds, static: true, debug }
