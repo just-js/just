@@ -99,7 +99,14 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - /dev/loop module
 - shared memory module
 - recurse all the way down the directory - auto-discover the dependencies
-
+- build: merge libs/modules arrays - .flat()
+- general: allow requiring a string
+- net: remove dependency on linux-headers - linux/if_packet.h
+- build on alpine
+```
+export JUST_HOME=$(pwd)
+apk add g++ make curl linux-headers
+```
 
 
 - remove all throws in lib/*.js
