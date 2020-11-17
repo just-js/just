@@ -87,22 +87,40 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - docker builds
 
 ## Todo
-- figure out how to pass a define to module so we can do a static build without dlopen
-- allow just.library('foo.so') to load internal first and if that fails to try dlopen
-- naming convention for docker images
-- catch all exceptions in c++ and do return codes
-- generate dockerfile/.gitignore/.dockerignore when building a project
-- docker build in makefile (parameterize dockefile)
-- init command to initialize a basic app with a name you provide on command line
-- put all the generated files in '.just'
-- look at gvisor - we could do similar and reduce syscalls to a subset
-- /dev/loop module
-- shared memory module
-- recurse all the way down the directory - auto-discover the dependencies
+- build: generated files
+.gitignore
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.dockerignore
+{main}.js?
+{index}.js
+
+allow overriding the auto-generated files with an env var to a path with templates
+
+- build: --shared option
+- build: autodiscover dependencies
+- build: config for each module listing object files - can we autodiscover this too?
+- build: 'just init'
+- build: all modules are in lib/{name}.js or lib/{name}/index.js
+- build: they can have files underneath
+- general: when requiring, we lookup the internal cache if we don't find the real file
+- build: option to disallow any external files in require when building
+- build: add the config at a known location so we can look it up and parse it (JSON, not JS)
+- library: allow just.library('foo.so') to load internal first and if that fails to try dlopen
+- docker: naming convention for docker images
+- general: catch all exceptions in c++ and do return codes
+- build: generate dockerfile/.gitignore/.dockerignore when building a project
+- build: docker build in makefile (parameterize dockefile)
+- build: init command to initialize a basic app with a name you provide on command line
+- build: put all the generated files in '.just'
+- general: look at gvisor - we could do similar and reduce syscalls to a subset
+- library: /dev/loop module
+- library: shared memory module
+- build: recurse all the way down the directory - auto-discover the dependencies
 - build: merge libs/modules arrays - .flat()
 - general: allow requiring a string
 - net: remove dependency on linux-headers - linux/if_packet.h
-- build on alpine
+- general: build on alpine
 ```
 export JUST_HOME=$(pwd)
 apk add g++ make curl linux-headers
