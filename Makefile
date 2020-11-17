@@ -25,16 +25,16 @@ examples: ## download the examples for this release
 	tar -zxvf examples.tar.gz
 	mv examples-$(RELEASE) examples
 
-module: modules ## build a shared library for a module 
+module: ## build a shared library for a module 
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ library
 
-module-debug: modules ## build a debug version of a shared library for a module
+module-debug: ## build a debug version of a shared library for a module
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ library-debug
 
-module-static: modules ## build a shared library for a module 
+module-static: ## build a shared library for a module 
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ FLAGS=-DSTATIC library
 
-module-static-debug: modules ## build a shared library for a module 
+module-static-debug: ## build a shared library for a module 
 	JUST_HOME=$(JUST_HOME) make -C modules/${MODULE}/ FLAGS=-DSTATIC library-debug
 
 builtins: deps just.cc just.h Makefile main.cc ## compile builtins with build dependencies
