@@ -98,6 +98,8 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - look at gvisor - we could do similar and reduce syscalls to a subset
 - /dev/loop module
 - shared memory module
+- recurse all the way down the directory - auto-discover the dependencies
+
 
 
 - remove all throws in lib/*.js
