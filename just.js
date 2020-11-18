@@ -283,11 +283,12 @@ function main () {
   just.waitForInspector = inspector
 
   function startup () {
+    if (!just.args.length) return true
     if (just.workerSource) {
       just.path.scriptName = just.path.join(just.sys.cwd(), just.args[0] || 'thread')
       const source = just.workerSource
       delete just.workerSource
-      just.vm.runScript(`(function() {${source}})()`, just.path.scriptName)
+      just.vm.runScript(source, just.path.scriptName)
       return
     }
     if (just.args.length === 1) {
@@ -309,12 +310,12 @@ function main () {
         chunks.push(buf.readString(bytes))
         bytes = just.net.read(just.sys.STDIN_FILENO, buf)
       }
-      just.vm.runScript(`(function() {${chunks.join('')}})()`, 'stdin')
+      just.vm.runScript(chunks.join(''), 'stdin')
       return
     }
     if (just.args[1] === 'eval') {
       just.path.scriptName = 'eval'
-      just.vm.runScript(`(function() {${just.args[2]}})()`, just.path.scriptName)
+      just.vm.runScript(just.args[2], just.path.scriptName)
       return
     }
     if (just.args[1] === 'build') {
@@ -340,7 +341,7 @@ function main () {
       return
     }
     just.path.scriptName = just.path.join(just.sys.cwd(), just.args[1])
-    just.vm.runScript(`(function() {${just.fs.readFile(just.args[1])}})()`, just.path.scriptName)
+    just.vm.runScript(just.fs.readFile(just.args[1]), just.path.scriptName)
   }
 
   if (just.waitForInspector) {
@@ -357,8 +358,7 @@ function main () {
     just.factory.run()
     return
   }
-  startup()
-  just.factory.run()
+  if (!startup()) just.factory.run()
 }
 
 main()
