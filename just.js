@@ -205,6 +205,28 @@ function setNonBlocking (fd) {
   return just.fs.fcntl(fd, just.sys.F_SETFL, flags)
 }
 
+function parseArgs (args) {
+  let clean = false
+  let dump = false
+  let inspector = false
+  args = args.filter(arg => {
+    if (arg === '--clean') {
+      clean = true
+      return false
+    }
+    if (arg === '--inspector') {
+      inspector = true
+      return false
+    }
+    if (arg === '--dump') {
+      dump = true
+      return false
+    }
+    return true
+  })
+  return { args, inspector, clean, dump }
+}
+
 function main () {
   const { library, requireNative, require, cache } = wrapRequire()
 
@@ -256,12 +278,9 @@ function main () {
   just.hrtime = wrapHrtime(just.sys.hrtime)
 
   delete global.console
-
-  just.args = just.args.filter(arg => {
-    const found = (arg === '--inspector')
-    if (found) just.waitForInspector = true
-    return !found
-  })
+  const { args, dump, clean, inspector } = parseArgs(just.args)
+  just.args = args
+  just.waitForInspector = inspector
 
   function startup () {
     if (just.workerSource) {
@@ -302,11 +321,22 @@ function main () {
       just.path.scriptName = 'build'
       const buildModule = just.require('build')
       if (!buildModule) throw new Error('Build not Available')
-      const { run } = buildModule
-      const config = require(just.args[2] || 'config.js') || {}
+      const config = require(just.args[2] || 'config.json') || require('config.js') || {}
       config.justDir = just.env().JUST_TARGET || just.sys.cwd()
-      run(config, ...just.args.slice(3))
+      buildModule.run(config, { dump, clean })
         .catch(err => just.error(err.stack))
+      return
+    }
+    if (just.args[1] === 'init') {
+      const buildModule = just.require('build')
+      if (!buildModule) throw new Error('Build not Available')
+      buildModule.init(just.args[2] || 'hello')
+      return
+    }
+    if (just.args[1] === 'clean') {
+      const buildModule = just.require('build')
+      if (!buildModule) throw new Error('Build not Available')
+      buildModule.clean()
       return
     }
     just.path.scriptName = just.path.join(just.sys.cwd(), just.args[1])

@@ -4,6 +4,25 @@ A very small v8 javascript runtime for linux only
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/just-js/binder/HEAD)
 
+## Build and Run
+
+Currently working on modern linux (debian/ubuntu and alpine tested) on x86_64
+
+```bash
+sh -c "$(curl -sSL https://raw.githubusercontent.com/just-js/just/0.0.6/install.sh)"
+make -C just-0.0.6 install
+mkdir app
+cd app
+just init
+just build
+./app
+```
+
+## Docker
+
+```
+
+```
 ## Philosophy/Goals
 - small, secure, robust and performant js runtime for linux
 - small codebase. easy to understand and hack

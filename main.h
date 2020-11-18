@@ -27,34 +27,33 @@ extern char _binary_lib_websocket_js_end[];
 extern char _binary_config_runtime_js_start[];
 extern char _binary_config_runtime_js_end[];
 extern "C" {
-extern void* _register_sys();
-extern void* _register_fs();
-extern void* _register_net();
-extern void* _register_vm();
-extern void* _register_epoll();
+  extern void* _register_sys();
+  extern void* _register_fs();
+  extern void* _register_net();
+  extern void* _register_vm();
+  extern void* _register_epoll();
 }
 void register_builtins() {
-just::builtins_add("lib/fs.js", _binary_lib_fs_js_start, _binary_lib_fs_js_end - _binary_lib_fs_js_start);
-just::builtins_add("lib/loop.js", _binary_lib_loop_js_start, _binary_lib_loop_js_end - _binary_lib_loop_js_start);
-just::builtins_add("lib/path.js", _binary_lib_path_js_start, _binary_lib_path_js_end - _binary_lib_path_js_start);
-just::builtins_add("lib/process.js", _binary_lib_process_js_start, _binary_lib_process_js_end - _binary_lib_process_js_start);
-just::builtins_add("lib/build.js", _binary_lib_build_js_start, _binary_lib_build_js_end - _binary_lib_build_js_start);
-just::builtins_add("lib/repl.js", _binary_lib_repl_js_start, _binary_lib_repl_js_end - _binary_lib_repl_js_start);
-just::builtins_add("just.cc", _binary_just_cc_start, _binary_just_cc_end - _binary_just_cc_start);
-just::builtins_add("Makefile", _binary_Makefile_start, _binary_Makefile_end - _binary_Makefile_start);
-just::builtins_add("main.cc", _binary_main_cc_start, _binary_main_cc_end - _binary_main_cc_start);
-just::builtins_add("just.h", _binary_just_h_start, _binary_just_h_end - _binary_just_h_start);
-just::builtins_add("just.js", _binary_just_js_start, _binary_just_js_end - _binary_just_js_start);
-just::builtins_add("lib/inspector.js", _binary_lib_inspector_js_start, _binary_lib_inspector_js_end - _binary_lib_inspector_js_start);
-just::builtins_add("lib/websocket.js", _binary_lib_websocket_js_start, _binary_lib_websocket_js_end - _binary_lib_websocket_js_start);
-just::builtins_add("config/runtime.js", _binary_config_runtime_js_start, _binary_config_runtime_js_end - _binary_config_runtime_js_start);
-just::modules["sys"] = &_register_sys;
-just::modules["fs"] = &_register_fs;
-just::modules["net"] = &_register_net;
-just::modules["vm"] = &_register_vm;
-just::modules["epoll"] = &_register_epoll;
+  just::builtins_add("lib/fs.js", _binary_lib_fs_js_start, _binary_lib_fs_js_end - _binary_lib_fs_js_start);
+  just::builtins_add("lib/loop.js", _binary_lib_loop_js_start, _binary_lib_loop_js_end - _binary_lib_loop_js_start);
+  just::builtins_add("lib/path.js", _binary_lib_path_js_start, _binary_lib_path_js_end - _binary_lib_path_js_start);
+  just::builtins_add("lib/process.js", _binary_lib_process_js_start, _binary_lib_process_js_end - _binary_lib_process_js_start);
+  just::builtins_add("lib/build.js", _binary_lib_build_js_start, _binary_lib_build_js_end - _binary_lib_build_js_start);
+  just::builtins_add("lib/repl.js", _binary_lib_repl_js_start, _binary_lib_repl_js_end - _binary_lib_repl_js_start);
+  just::builtins_add("just.cc", _binary_just_cc_start, _binary_just_cc_end - _binary_just_cc_start);
+  just::builtins_add("Makefile", _binary_Makefile_start, _binary_Makefile_end - _binary_Makefile_start);
+  just::builtins_add("main.cc", _binary_main_cc_start, _binary_main_cc_end - _binary_main_cc_start);
+  just::builtins_add("just.h", _binary_just_h_start, _binary_just_h_end - _binary_just_h_start);
+  just::builtins_add("just.js", _binary_just_js_start, _binary_just_js_end - _binary_just_js_start);
+  just::builtins_add("lib/inspector.js", _binary_lib_inspector_js_start, _binary_lib_inspector_js_end - _binary_lib_inspector_js_start);
+  just::builtins_add("lib/websocket.js", _binary_lib_websocket_js_start, _binary_lib_websocket_js_end - _binary_lib_websocket_js_start);
+  just::builtins_add("config/runtime.js", _binary_config_runtime_js_start, _binary_config_runtime_js_end - _binary_config_runtime_js_start);
+  just::modules["sys"] = &_register_sys;
+  just::modules["fs"] = &_register_fs;
+  just::modules["net"] = &_register_net;
+  just::modules["vm"] = &_register_vm;
+  just::modules["epoll"] = &_register_epoll;
 }
-
 static unsigned int just_js_len = _binary_just_js_end - _binary_just_js_start;
 static const char* just_js = _binary_just_js_start;
 static unsigned int index_js_len = 0;
