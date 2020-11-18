@@ -285,7 +285,7 @@ int just::CreateIsolate(int argc, char** argv,
 int just::CreateIsolate(int argc, char** argv, const char* main_src, unsigned int main_len) {
   return CreateIsolate(argc, argv, main_src, main_len, NULL, 0, NULL, 0);
 }
-
+/*
 void just::Snapshot(const FunctionCallbackInfo<Value> &args) {
   std::vector<intptr_t> external_references = {
       reinterpret_cast<intptr_t>(nullptr)};
@@ -304,7 +304,7 @@ void just::Snapshot(const FunctionCallbackInfo<Value> &args) {
     delete[] blob.data;
   }
 }
-
+*/
 void just::Load(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);

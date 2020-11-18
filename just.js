@@ -107,6 +107,7 @@ function wrapLibrary (cache = {}) {
     const lib = just.library(ptr)
     just.sys.dlclose(handle)
     if (!lib) return
+    lib.type = 'module-external'
     cache[path] = lib
     return lib
   }
@@ -119,6 +120,7 @@ function wrapLibrary (cache = {}) {
     if (cache[name]) return cache[name]
     const lib = just.load(name)
     if (!lib) return
+    lib.type = 'module'
     cache[name] = lib
     return lib
   }
