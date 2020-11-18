@@ -286,6 +286,25 @@ int just::CreateIsolate(int argc, char** argv, const char* main_src, unsigned in
   return CreateIsolate(argc, argv, main_src, main_len, NULL, 0, NULL, 0);
 }
 
+void just::Snapshot(const FunctionCallbackInfo<Value> &args) {
+  std::vector<intptr_t> external_references = {
+      reinterpret_cast<intptr_t>(nullptr)};
+  Isolate* isolate = Isolate::Allocate();
+  {
+    std::vector<size_t> isolate_data_indexes;
+    v8::SnapshotCreator creator(isolate);
+    {
+      HandleScope scope(isolate);
+      creator.SetDefaultContext(Context::New(isolate));
+      size_t index = creator.AddContext(Context::New(isolate));
+    }
+    v8::StartupData blob =
+        creator.CreateBlob(v8::SnapshotCreator::FunctionCodeHandling::kClear);
+    fprintf(stderr, "size %i\n", blob.raw_size);
+    delete[] blob.data;
+  }
+}
+
 void just::Load(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -293,19 +312,17 @@ void just::Load(const FunctionCallbackInfo<Value> &args) {
   Local<ObjectTemplate> exports = ObjectTemplate::New(isolate);
   if (args[0]->IsString()) {
     String::Utf8Value name(isolate, args[0]);
-/*    
     auto iter = just::modules.find(*name);
     if (iter == just::modules.end()) {
-      fprintf(stderr, "not found %s\n", *name);
+      return;
     } else {
       register_plugin _init = (*iter->second);
       auto _register = reinterpret_cast<InitializerCallback>(_init());
       _register(isolate, exports);
     }
-*/
-    register_plugin _init = *just::modules[*name];
-    auto _register = reinterpret_cast<InitializerCallback>(_init());
-    _register(isolate, exports);
+    //register_plugin _init = *just::modules[*name];
+    //auto _register = reinterpret_cast<InitializerCallback>(_init());
+    //_register(isolate, exports);
   } else {
     Local<BigInt> address64 = Local<BigInt>::Cast(args[0]);
     void* ptr = reinterpret_cast<void*>(address64->Uint64Value());
@@ -354,6 +371,7 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, target, "print", Print);
   SET_METHOD(isolate, target, "error", Error);
   SET_METHOD(isolate, target, "load", Load);
+  //SET_METHOD(isolate, target, "snapshot", Snapshot);
   SET_METHOD(isolate, target, "builtin", Builtin);
   SET_MODULE(isolate, target, "version", version);
 }

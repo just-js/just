@@ -96,9 +96,10 @@ function wrapEnv (env) {
   }
 }
 
-function wrapRequire (cache = {}) {
+function wrapLibrary (cache = {}) {
   function loadLibrary (path, name) {
     if (cache[path]) return cache[path]
+    if (!just.sys.dlopen) return
     const handle = just.sys.dlopen(path, just.sys.RTLD_LAZY)
     if (!handle) return
     const ptr = just.sys.dlsym(handle, `_register_${name}`)
@@ -111,13 +112,22 @@ function wrapRequire (cache = {}) {
   }
 
   function library (name, path) {
-    if (path) return loadLibrary(path, name)
+    if (path) {
+      const lib = loadLibrary(path, name)
+      if (lib) return lib
+    }
     if (cache[name]) return cache[name]
     const lib = just.load(name)
     if (!lib) return
     cache[name] = lib
     return lib
   }
+
+  return { library, loadLibrary, cache }
+}
+
+function wrapRequire (cache = {}) {
+  const appRoot = just.sys.cwd()
 
   function requireNative (path) {
     path = `lib/${path}.js`
@@ -135,19 +145,25 @@ function wrapRequire (cache = {}) {
     return module.exports
   }
 
-  function require (path, parent) {
+  function require (path, parent = { dirName: appRoot }) {
     const ext = path.split('.').slice(-1)[0]
     if (ext === 'js' || ext === 'json') {
       const { join, baseName } = just.path
-      let dirName = parent ? parent.dirName : baseName(join(just.sys.cwd(), just.args[1] || './'))
+      let dirName = parent.dirName
       const fileName = join(dirName, path)
       if (cache[fileName]) return cache[fileName].exports
-      if (!just.fs.isFile(fileName)) return
       dirName = baseName(fileName)
       const params = ['exports', 'require', 'module']
       const exports = {}
       const module = { exports, dirName, fileName, type: ext }
-      module.text = just.fs.readFile(fileName)
+      if (just.fs.isFile(fileName)) {
+        module.text = just.fs.readFile(fileName)
+      } else {
+        path = fileName.replace(appRoot, '')
+        if (path[0] === '/') path = path.slice(1)
+        module.text = just.builtin(path)
+        if (!module.text) return
+      }
       cache[fileName] = module
       if (ext === 'js') {
         const fun = just.vm.compile(module.text, fileName, params, [])
@@ -161,7 +177,7 @@ function wrapRequire (cache = {}) {
     return just.requireNative(path, parent)
   }
 
-  return { library, requireNative, require, cache }
+  return { requireNative, require, cache }
 }
 
 function setTimeout (callback, timeout, repeat = 0, loop = just.factory.loop) {
@@ -228,7 +244,7 @@ function parseArgs (args) {
 }
 
 function main () {
-  const { library, requireNative, require, cache } = wrapRequire()
+  const { library, cache } = wrapLibrary()
 
   // load the builtin modules
   just.vm = library('vm').vm
@@ -237,6 +253,7 @@ function main () {
   just.net = library('net').net
   just.sys = library('sys').sys
 
+  const { requireNative, require } = wrapRequire(cache)
   ArrayBuffer.prototype.writeString = function(str, off = 0) { // eslint-disable-line
     return just.sys.writeString(this, str, off)
   }
