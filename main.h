@@ -24,8 +24,8 @@ extern char _binary_lib_inspector_js_start[];
 extern char _binary_lib_inspector_js_end[];
 extern char _binary_lib_websocket_js_start[];
 extern char _binary_lib_websocket_js_end[];
-extern char _binary_config_runtime_js_start[];
-extern char _binary_config_runtime_js_end[];
+extern char _binary_config_js_start[];
+extern char _binary_config_js_end[];
 extern "C" {
   extern void* _register_sys();
   extern void* _register_fs();
@@ -47,7 +47,7 @@ void register_builtins() {
   just::builtins_add("just.js", _binary_just_js_start, _binary_just_js_end - _binary_just_js_start);
   just::builtins_add("lib/inspector.js", _binary_lib_inspector_js_start, _binary_lib_inspector_js_end - _binary_lib_inspector_js_start);
   just::builtins_add("lib/websocket.js", _binary_lib_websocket_js_start, _binary_lib_websocket_js_end - _binary_lib_websocket_js_start);
-  just::builtins_add("config/runtime.js", _binary_config_runtime_js_start, _binary_config_runtime_js_end - _binary_config_runtime_js_start);
+  just::builtins_add("config.js", _binary_config_js_start, _binary_config_js_end - _binary_config_js_start);
   just::modules["sys"] = &_register_sys;
   just::modules["fs"] = &_register_fs;
   just::modules["net"] = &_register_net;

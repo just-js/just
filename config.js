@@ -48,7 +48,7 @@ const embeds = [
   'just.js',
   'lib/inspector.js',
   'lib/websocket.js',
-  'config/runtime.js'
+  'config.js'
 ]
 
 const target = 'just'

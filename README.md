@@ -11,11 +11,12 @@ Currently working on modern linux (debian/ubuntu and alpine tested) on x86_64
 ```bash
 sh -c "$(curl -sSL https://raw.githubusercontent.com/just-js/just/0.0.6/install.sh)"
 make -C just-0.0.6 install
-mkdir app
-cd app
-just init
+just init hello
+cd hello
 just build
-./app
+./hello
+make cleanall
+just clean
 ```
 
 ## Docker

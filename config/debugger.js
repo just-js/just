@@ -63,7 +63,7 @@ const embeds = [
   'main.cc',
   'just.h',
   'just.js',
-  'config/runtime.js',
+  'config.js',
   'config/debugger.js'
 ]
 
