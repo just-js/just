@@ -9,13 +9,23 @@ A very small v8 javascript runtime for linux only
 Currently working on modern linux (debian/ubuntu and alpine tested) on x86_64
 
 ```bash
+# download and run the build script
 sh -c "$(curl -sSL https://raw.githubusercontent.com/just-js/just/0.0.6/install.sh)"
+# install just binary to /usr/local/bin
 make -C just-0.0.6 install
+# export the just home directory
+export JUST_HOME=$(pwd)/just-0.0.6
+# if you don't want to install, add JUST_HOME to SPATH
+export PATH=$PATH:$JUST_HOME
+# initialise a new application in the hello directory
 just init hello
 cd hello
+# build hello app
 just build
 ./hello
+# clean all the just makefile artifacts
 make cleanall
+# clean the just source files required for build
 just clean
 ```
 

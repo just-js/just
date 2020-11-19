@@ -227,9 +227,14 @@ function parseArgs (args) {
   let clean = false
   let dump = false
   let inspector = false
+  let silent = false
   args = args.filter(arg => {
     if (arg === '--clean') {
       clean = true
+      return false
+    }
+    if (arg === '--silent') {
+      silent = true
       return false
     }
     if (arg === '--inspector') {
@@ -242,7 +247,7 @@ function parseArgs (args) {
     }
     return true
   })
-  return { args, inspector, clean, dump }
+  return { args, inspector, clean, dump, silent }
 }
 
 function main () {
@@ -297,7 +302,7 @@ function main () {
   just.hrtime = wrapHrtime(just.sys.hrtime)
 
   delete global.console
-  const { args, dump, clean, inspector } = parseArgs(just.args)
+  const { args, dump, clean, inspector, silent } = parseArgs(just.args)
   just.args = args
   just.waitForInspector = inspector
 
@@ -343,7 +348,7 @@ function main () {
       if (!buildModule) throw new Error('Build not Available')
       const config = require(just.args[2] || 'config.json') || require('config.js') || {}
       config.justDir = just.env().JUST_TARGET || just.sys.cwd()
-      buildModule.run(config, { dump, clean })
+      buildModule.run(config, { dump, clean, silent })
         .catch(err => just.error(err.stack))
       return
     }
