@@ -303,8 +303,8 @@ function main () {
 
   delete global.console
   const { args, dump, clean, inspector, silent } = parseArgs(just.args)
-  just.args = args
   just.waitForInspector = inspector
+  just.args = args
 
   function startup () {
     if (!just.args.length) return true
@@ -347,7 +347,6 @@ function main () {
       const buildModule = just.require('build')
       if (!buildModule) throw new Error('Build not Available')
       const config = require(just.args[2] || 'config.json') || require('config.js') || {}
-      config.justDir = just.env().JUST_TARGET || just.sys.cwd()
       buildModule.run(config, { dump, clean, silent })
         .catch(err => just.error(err.stack))
       return

@@ -61,6 +61,7 @@ module-static-debug: ## build a shared library for a module
 
 builtins.o: just.cc just.h Makefile main.cc ## compile builtins with build dependencies
 	ld -r -b binary ${EMBEDS} ${LIBS} -o builtins.o
+	#gcc builtins.S -c -o foo.o
 
 main: modules builtins.o deps/v8/libv8_monolith.a
 	$(CC) -c ${FLAGS} -DJUST_VERSION='"${RELEASE}"' -std=c++11 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc

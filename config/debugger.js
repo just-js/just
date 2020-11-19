@@ -11,7 +11,7 @@ const libs = [
 
 const version = just.version.just
 const v8flags = ''
-const debug = false
+const debug = true
 const capabilities = [] // list of allowed internal modules, api calls etc. TBD
 
 const modules = [{
