@@ -12,3 +12,4 @@ deps
 *.a
 modules
 examples
+.just
