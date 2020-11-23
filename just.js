@@ -309,14 +309,13 @@ function main () {
   function startup () {
     if (!just.args.length) return true
     if (just.workerSource) {
-      just.path.scriptName = just.path.join(just.sys.cwd(), just.args[0] || 'thread')
+      const scriptName = just.path.join(just.sys.cwd(), just.args[0] || 'thread')
       const source = just.workerSource
       delete just.workerSource
-      just.vm.runScript(source, just.path.scriptName)
+      just.vm.runScript(source, scriptName)
       return
     }
     if (just.args.length === 1) {
-      just.path.scriptName = 'repl'
       const replModule = just.require('repl')
       if (!replModule) {
         throw new Error('REPL not enabled. Maybe I should be a standalone?')
@@ -338,12 +337,10 @@ function main () {
       return
     }
     if (just.args[1] === 'eval') {
-      just.path.scriptName = 'eval'
-      just.vm.runScript(just.args[2], just.path.scriptName)
+      just.vm.runScript(just.args[2], 'eval')
       return
     }
     if (just.args[1] === 'build') {
-      just.path.scriptName = 'build'
       const buildModule = just.require('build')
       if (!buildModule) throw new Error('Build not Available')
       const config = require(just.args[2] || 'config.json') || require('config.js') || {}
@@ -363,8 +360,8 @@ function main () {
       buildModule.clean()
       return
     }
-    just.path.scriptName = just.path.join(just.sys.cwd(), just.args[1])
-    just.vm.runScript(just.fs.readFile(just.args[1]), just.path.scriptName)
+    const scriptName = just.path.join(just.sys.cwd(), just.args[1])
+    just.vm.runScript(just.fs.readFile(just.args[1]), scriptName)
   }
 
   if (just.waitForInspector) {

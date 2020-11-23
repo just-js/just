@@ -126,6 +126,8 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 {index}.js
 
 allow overriding the auto-generated files with an env var to a path with templates
+s2n
+https://github.com/awslabs/s2n
 
 - build: --shared option
 - build: autodiscover dependencies
