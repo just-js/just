@@ -168,6 +168,7 @@ int just::CreateIsolate(int argc, char** argv,
   {
     Isolate::Scope isolate_scope(isolate);
     HandleScope handle_scope(isolate);
+    // TODO: make this a config option
     isolate->SetCaptureStackTraceForUncaughtExceptions(true, 1000, 
       StackTrace::kDetailed);
     Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
@@ -177,6 +178,7 @@ int just::CreateIsolate(int argc, char** argv,
       NewStringType::kNormal), just);
     Local<Context> context = Context::New(isolate, NULL, global);
     Context::Scope context_scope(context);
+    // TODO: make this a config option
     context->AllowCodeGenerationFromStrings(false);
     isolate->SetPromiseRejectCallback(PromiseRejectCallback);
     Local<Array> arguments = Array::New(isolate);
@@ -285,26 +287,7 @@ int just::CreateIsolate(int argc, char** argv,
 int just::CreateIsolate(int argc, char** argv, const char* main_src, unsigned int main_len) {
   return CreateIsolate(argc, argv, main_src, main_len, NULL, 0, NULL, 0);
 }
-/*
-void just::Snapshot(const FunctionCallbackInfo<Value> &args) {
-  std::vector<intptr_t> external_references = {
-      reinterpret_cast<intptr_t>(nullptr)};
-  Isolate* isolate = Isolate::Allocate();
-  {
-    std::vector<size_t> isolate_data_indexes;
-    v8::SnapshotCreator creator(isolate);
-    {
-      HandleScope scope(isolate);
-      creator.SetDefaultContext(Context::New(isolate));
-      size_t index = creator.AddContext(Context::New(isolate));
-    }
-    v8::StartupData blob =
-        creator.CreateBlob(v8::SnapshotCreator::FunctionCodeHandling::kClear);
-    fprintf(stderr, "size %i\n", blob.raw_size);
-    delete[] blob.data;
-  }
-}
-*/
+
 void just::Load(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   HandleScope handleScope(isolate);
@@ -320,9 +303,6 @@ void just::Load(const FunctionCallbackInfo<Value> &args) {
       auto _register = reinterpret_cast<InitializerCallback>(_init());
       _register(isolate, exports);
     }
-    //register_plugin _init = *just::modules[*name];
-    //auto _register = reinterpret_cast<InitializerCallback>(_init());
-    //_register(isolate, exports);
   } else {
     Local<BigInt> address64 = Local<BigInt>::Cast(args[0]);
     void* ptr = reinterpret_cast<void*>(address64->Uint64Value());
@@ -371,7 +351,6 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, target, "print", Print);
   SET_METHOD(isolate, target, "error", Error);
   SET_METHOD(isolate, target, "load", Load);
-  //SET_METHOD(isolate, target, "snapshot", Snapshot);
   SET_METHOD(isolate, target, "builtin", Builtin);
   SET_MODULE(isolate, target, "version", version);
 }

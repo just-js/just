@@ -11,6 +11,7 @@ int main(int argc, char** argv) {
   std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
   v8::V8::InitializePlatform(platform.get());
   v8::V8::Initialize();
+  // TODO: make these config/build options
   //v8::V8::EnableWebAssemblyTrapHandler(true);
   v8::V8::SetFlagsFromString("--stack-trace-limit=10 --use-strict --disallow-code-generation-from-strings");
   v8::V8::SetFlagsFromCommandLine(&argc, argv, true);

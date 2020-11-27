@@ -117,6 +117,31 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - docker builds
 
 ## Todo
+
+--clean - cleans just files
+--cleanall - cleans just files and all modules
+--reset - clears the JUST_TARGET directory and reinstalls
+--debug - do a debug build (override config)
+
+
+builder
+- add all default libs/modules
+- add all app specific libs/modules
+
+- config - allow specifying built in v8 command line options
+- config - configuration option to enable/disable runtime v8 command line switches
+
+- port to arm/pi
+- port to risc-v - https://live-risc-v.pantheonsite.io/blog/2020/08/unlocking-javascript-v8-riscv-open-sourced/
+https://github.com/v8-riscv/v8/wiki
+
+- embed the flamegraph scripts
+
+build any project using same just directory
+
+JUST_TARGET=/home/andrew/.just just build --silent --clean
+
+
 - build: generated files
 .gitignore
 .vscode/c_cpp_properties.json

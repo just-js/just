@@ -54,4 +54,4 @@ const embeds = [
 const target = 'just'
 const main = 'just.js'
 
-module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds, static: true, debug }
+module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds, static: false, debug }

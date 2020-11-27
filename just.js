@@ -205,14 +205,13 @@ function clearTimeout (fd, loop = just.factory.loop) {
   just.net.close(fd)
 }
 
-class SystemError {
-  constructor (syscall) {
+class SystemError extends Error {
+  constructor (syscall) { 
     const { sys } = just
-    this.name = 'SystemError'
     const errno = sys.errno()
-    this.message = `${syscall} (${errno}) ${sys.strerror(errno)}`
-    Error.captureStackTrace(this, this.constructor)
-    this.stack = this.stack.split('\n').slice(0, -4).join('\n')
+    const message = `${syscall} (${errno}) ${sys.strerror(errno)}`
+    super(message)
+    this.name = 'SystemError'
   }
 }
 
@@ -225,12 +224,18 @@ function setNonBlocking (fd) {
 
 function parseArgs (args) {
   let clean = false
+  let cleanall = false
   let dump = false
   let inspector = false
   let silent = false
+  // TODO: most of these are build args - only parse them in the build script
   args = args.filter(arg => {
     if (arg === '--clean') {
       clean = true
+      return false
+    }
+    if (arg === '--cleanall') {
+      cleanall = true
       return false
     }
     if (arg === '--silent') {
@@ -247,7 +252,7 @@ function parseArgs (args) {
     }
     return true
   })
-  return { args, inspector, clean, dump, silent }
+  return { args, inspector, clean, cleanall, dump, silent }
 }
 
 function main () {
@@ -302,7 +307,7 @@ function main () {
   just.hrtime = wrapHrtime(just.sys.hrtime)
 
   delete global.console
-  const { args, dump, clean, inspector, silent } = parseArgs(just.args)
+  const { args, dump, clean, cleanall, inspector, silent } = parseArgs(just.args)
   just.waitForInspector = inspector
   just.args = args
 
@@ -344,7 +349,7 @@ function main () {
       const buildModule = just.require('build')
       if (!buildModule) throw new Error('Build not Available')
       const config = require(just.args[2] || 'config.json') || require('config.js') || {}
-      buildModule.run(config, { dump, clean, silent })
+      buildModule.run(config, { dump, clean, cleanall, silent })
         .catch(err => just.error(err.stack))
       return
     }
