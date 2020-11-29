@@ -98,34 +98,33 @@ function wrapEnv (env) {
 
 function wrapLibrary (cache = {}) {
   function loadLibrary (path, name) {
-    if (cache[path]) return cache[path]
+    if (cache[name]) return cache[name]
     if (!just.sys.dlopen) return
     const handle = just.sys.dlopen(path, just.sys.RTLD_LAZY)
     if (!handle) return
     const ptr = just.sys.dlsym(handle, `_register_${name}`)
     if (!ptr) return
-    const lib = just.library(ptr)
+    const lib = just.load(ptr)
     just.sys.dlclose(handle)
     if (!lib) return
     lib.type = 'module-external'
-    cache[path] = lib
+    cache[name] = lib
     return lib
   }
 
   function library (name, path) {
-    if (path) {
-      const lib = loadLibrary(path, name)
-      if (lib) return lib
-    }
     if (cache[name]) return cache[name]
     const lib = just.load(name)
-    if (!lib) return
+    if (!lib) {
+      if (path) return loadLibrary(path, name)
+      return loadLibrary(`${name}.so`, name)
+    }
     lib.type = 'module'
     cache[name] = lib
     return lib
   }
 
-  return { library, loadLibrary, cache }
+  return { library, cache }
 }
 
 function wrapRequire (cache = {}) {
