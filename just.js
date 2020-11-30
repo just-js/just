@@ -105,8 +105,8 @@ function wrapLibrary (cache = {}) {
     const ptr = just.sys.dlsym(handle, `_register_${name}`)
     if (!ptr) return
     const lib = just.load(ptr)
-    just.sys.dlclose(handle)
     if (!lib) return
+    lib.close = () => just.sys.dlclose(handle)
     lib.type = 'module-external'
     cache[name] = lib
     return lib
