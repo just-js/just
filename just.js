@@ -147,6 +147,7 @@ function wrapRequire (cache = {}) {
   }
 
   function require (path, parent = { dirName: appRoot }) {
+    if (path[0] === '@') path = `${appRoot}/lib/${path.slice(1)}/${just.path.fileName(path.slice(1))}.js`
     const ext = path.split('.').slice(-1)[0]
     if (ext === 'js' || ext === 'json') {
       const { join, baseName } = just.path
