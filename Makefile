@@ -21,6 +21,13 @@ modules: ## download the modules for this release
 	mv modules-$(RELEASE) modules
 	rm -f modules.tar.gz
 
+libs: ## download the libs for this release
+	rm -fr libs
+	curl -L -o libs.tar.gz https://github.com/just-js/libs/archive/$(RELEASE).tar.gz
+	tar -zxvf libs.tar.gz
+	mv libs-$(RELEASE) libs
+	rm -f libs.tar.gz
+
 examples: ## download the examples for this release
 	rm -fr examples
 	curl -L -o examples.tar.gz https://github.com/just-js/examples/archive/$(RELEASE).tar.gz
@@ -122,6 +129,7 @@ cleanall: ## remove just and build deps
 	rm -fr deps
 	rm -f *.gz
 	rm -fr modules
+	rm -fr libs
 	rm -fr examples
 	make clean
 

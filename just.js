@@ -129,6 +129,8 @@ function wrapLibrary (cache = {}) {
 
 function wrapRequire (cache = {}) {
   const appRoot = just.sys.cwd()
+  const { HOME, JUST_TARGET } = just.env()
+  const justDir = JUST_TARGET || `${HOME}/.just`
 
   function requireNative (path) {
     path = `lib/${path}.js`
@@ -164,7 +166,12 @@ function wrapRequire (cache = {}) {
         path = fileName.replace(appRoot, '')
         if (path[0] === '/') path = path.slice(1)
         module.text = just.builtin(path)
-        if (!module.text) return
+        if (!module.text) {
+          path = `${justDir}/${path.replace('lib/', 'libs/')}`
+          if (!just.fs.isFile(path)) return
+          module.text = just.fs.readFile(path)
+          if (!module.text) return
+        }
       }
       cache[fileName] = module
       if (ext === 'js') {
@@ -264,6 +271,7 @@ function main () {
   just.fs = library('fs').fs
   just.net = library('net').net
   just.sys = library('sys').sys
+  just.env = wrapEnv(just.sys.env)
 
   const { requireNative, require } = wrapRequire(cache)
   ArrayBuffer.prototype.writeString = function(str, off = 0) { // eslint-disable-line
@@ -299,7 +307,6 @@ function main () {
   just.require.cache = cache
   just.waitForInspector = false
 
-  just.env = wrapEnv(just.sys.env)
   just.memoryUsage = wrapMemoryUsage(just.sys.memoryUsage)
   just.cpuUsage = wrapCpuUsage(just.sys.cpuUsage)
   just.rUsage = wrapgetrUsage(just.sys.getrUsage)
