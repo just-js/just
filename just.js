@@ -370,8 +370,10 @@ function main () {
   }
 
   if (just.waitForInspector) {
-    just.inspector = just.library('inspector').inspector
-    if (!just.inspector) throw new SystemError('Cannot Load Inspector')
+    const inspectorLib = just.library('inspector')
+    if (!inspectorLib) throw new SystemError('inspector module is not enabled')
+    just.inspector = inspectorLib.inspector
+    // TODO: this is ugly
     Object.assign(just.inspector, require('inspector'))
     just.encode = library('encode').encode
     just.sha1 = library('sha1').sha1
