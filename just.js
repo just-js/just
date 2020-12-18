@@ -167,7 +167,7 @@ function wrapRequire (cache = {}) {
         if (path[0] === '/') path = path.slice(1)
         module.text = just.builtin(path)
         if (!module.text) {
-          path = `${justDir}/${path.replace('lib/', 'libs/')}`
+          path = `${justDir}/${path}`
           if (!just.fs.isFile(path)) return
           module.text = just.fs.readFile(path)
           if (!module.text) return
