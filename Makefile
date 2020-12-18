@@ -1,7 +1,7 @@
 CC=g++
-RELEASE=0.0.11
+RELEASE=0.0.12
 INSTALL=/usr/local/bin
-LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/build.js lib/repl.js
+LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/build.js lib/repl.js lib/acorn.js lib/configure.js
 MODULES=modules/net/net.o modules/epoll/epoll.o modules/fs/fs.o modules/sys/sys.o modules/vm/vm.o
 TARGET=just
 LIB=-ldl

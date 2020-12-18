@@ -4,7 +4,9 @@ const libs = [
   'lib/path.js',
   'lib/process.js',
   'lib/build.js',
-  'lib/repl.js'
+  'lib/repl.js',
+  'lib/configure.js',
+  'lib/acorn.js'
 ]
 
 const version = just.version.just

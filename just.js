@@ -138,7 +138,7 @@ function wrapRequire (cache = {}) {
     const { vm } = just
     const params = ['exports', 'require', 'module']
     const exports = {}
-    const module = { exports, type: 'native' }
+    const module = { exports, type: 'native', dirName: appRoot }
     module.text = just.builtin(path)
     if (!module.text) return
     const fun = vm.compile(module.text, path, params, [])
@@ -213,7 +213,7 @@ function clearTimeout (fd, loop = just.factory.loop) {
 }
 
 class SystemError extends Error {
-  constructor (syscall) { 
+  constructor (syscall) {
     const { sys } = just
     const errno = sys.errno()
     const message = `${syscall} (${errno}) ${sys.strerror(errno)}`
@@ -230,36 +230,35 @@ function setNonBlocking (fd) {
 }
 
 function parseArgs (args) {
-  let clean = false
-  let cleanall = false
-  let dump = false
-  let inspector = false
-  let silent = false
-  // TODO: most of these are build args - only parse them in the build script
+  const opts = { args }
   args = args.filter(arg => {
     if (arg === '--clean') {
-      clean = true
+      opts.clean = true
       return false
     }
     if (arg === '--cleanall') {
-      cleanall = true
+      opts.cleanall = true
       return false
     }
     if (arg === '--silent') {
-      silent = true
+      opts.silent = true
       return false
     }
     if (arg === '--inspector') {
-      inspector = true
+      opts.inspector = true
       return false
     }
     if (arg === '--dump') {
-      dump = true
+      opts.dump = true
+      return false
+    }
+    if (arg === '--static') {
+      opts.static = true
       return false
     }
     return true
   })
-  return { args, inspector, clean, cleanall, dump, silent }
+  return opts
 }
 
 function main () {
@@ -314,9 +313,9 @@ function main () {
   just.hrtime = wrapHrtime(just.sys.hrtime)
 
   delete global.console
-  const { args, dump, clean, cleanall, inspector, silent } = parseArgs(just.args)
-  just.waitForInspector = inspector
-  just.args = args
+  const opts = parseArgs(just.args)
+  just.waitForInspector = opts.inspector
+  just.args = opts.args
 
   function startup () {
     if (!just.args.length) return true
@@ -355,8 +354,13 @@ function main () {
     if (just.args[1] === 'build') {
       const buildModule = just.require('build')
       if (!buildModule) throw new Error('Build not Available')
-      const config = require(just.args[2] || 'config.json') || require('config.js') || {}
-      buildModule.run(config, { dump, clean, cleanall, silent })
+      let config
+      if (just.args.length > 2 && just.args[2].indexOf('.js') > -1) {
+        config = just.require('configure').configure(just.args[2], opts)
+      } else {
+        config = require(just.args[2] || 'config.json') || require('config.js') || {}
+      }
+      buildModule.run(config, opts)
         .catch(err => just.error(err.stack))
       return
     }

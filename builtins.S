@@ -28,6 +28,16 @@ _binary_lib_repl_js_start:
         .incbin "lib/repl.js"
         .global _binary_lib_repl_js_end
 _binary_lib_repl_js_end:
+.global _binary_lib_configure_js_start
+_binary_lib_configure_js_start:
+        .incbin "lib/configure.js"
+        .global _binary_lib_configure_js_end
+_binary_lib_configure_js_end:
+.global _binary_lib_acorn_js_start
+_binary_lib_acorn_js_start:
+        .incbin "lib/acorn.js"
+        .global _binary_lib_acorn_js_end
+_binary_lib_acorn_js_end:
 .global _binary_just_cc_start
 _binary_just_cc_start:
         .incbin "just.cc"
