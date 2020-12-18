@@ -22,10 +22,11 @@ modules: ## download the modules for this release
 	rm -f modules.tar.gz
 
 libs: ## download the libs for this release
-	rm -fr libs
+	rm -fr libs-$(RELEASE)
 	curl -L -o libs.tar.gz https://github.com/just-js/libs/archive/$(RELEASE).tar.gz
 	tar -zxvf libs.tar.gz
-	mv libs-$(RELEASE) libs
+	cp -fr libs-$(RELEASE)/* lib/
+	rm -fr libs-$(RELEASE)
 	rm -f libs.tar.gz
 
 examples: ## download the examples for this release
