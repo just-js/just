@@ -13,8 +13,10 @@ int main(int argc, char** argv) {
   v8::V8::Initialize();
   // TODO: make these config/build options
   //v8::V8::EnableWebAssemblyTrapHandler(true);
-  v8::V8::SetFlagsFromString("--stack-trace-limit=10 --use-strict --disallow-code-generation-from-strings");
-  v8::V8::SetFlagsFromCommandLine(&argc, argv, true);
+  v8::V8::SetFlagsFromString(v8flags);
+  if (_v8flags_from_commandline == 1) {
+    v8::V8::SetFlagsFromCommandLine(&argc, argv, true);
+  }
   register_builtins();
   if (_use_index) {
     just::CreateIsolate(argc, argv, just_js, just_js_len, 

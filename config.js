@@ -10,7 +10,8 @@ const libs = [
 ]
 
 const version = just.version.just
-const v8flags = ''
+const v8flags = '--stack-trace-limit=10 --use-strict --disallow-code-generation-from-strings'
+const v8flagsFromCommandLine = true
 const debug = false
 const capabilities = [] // list of allowed internal modules, api calls etc. TBD
 
@@ -56,4 +57,4 @@ const embeds = [
 const target = 'just'
 const main = 'just.js'
 
-module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds, static: false, debug }
+module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds, static: false, debug, v8flagsFromCommandLine }

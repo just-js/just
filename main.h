@@ -65,3 +65,5 @@ static const char* just_js = _binary_just_js_start;
 static unsigned int index_js_len = 0;
 static const char* index_js = NULL;
 static unsigned int _use_index = 0;
+static const char* v8flags = "--stack-trace-limit=10 --use-strict --disallow-code-generation-from-strings";
+static unsigned int _v8flags_from_commandline = 1;
