@@ -35,7 +35,7 @@ JUST_HOME=$(pwd)/just
 
 from the "just" folder you just cloned
 ```
-make runtime
+make runtime-static
 sudo make install
 ```
 

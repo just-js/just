@@ -4,6 +4,36 @@ A very small v8 javascript runtime for linux only
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/just-js/binder/HEAD)
 
+## Build and Run
+
+Currently working on modern linux (debian/ubuntu and alpine tested) on x86_64
+
+```bash
+# download and run the build script
+sh -c "$(curl -sSL https://raw.githubusercontent.com/just-js/just/0.0.6/install.sh)"
+# install just binary to /usr/local/bin
+make -C just-0.0.6 install
+# export the just home directory
+export JUST_HOME=$(pwd)/just-0.0.6
+# if you don't want to install, add JUST_HOME to SPATH
+export PATH=$PATH:$JUST_HOME
+# initialise a new application in the hello directory
+just init hello
+cd hello
+# build hello app
+just build
+./hello
+# clean all the just makefile artifacts
+make cleanall
+# clean the just source files required for build
+just clean
+```
+
+## Docker
+
+```
+
+```
 ## Philosophy/Goals
 - small, secure, robust and performant js runtime for linux
 - small codebase. easy to understand and hack
@@ -87,6 +117,73 @@ JUST_TARGET=$(pwd)/foo JUST_HOME=$(pwd)/foo/.just just build cleanall runtime-bu
 - docker builds
 
 ## Todo
+
+--clean - cleans just files
+--cleanall - cleans just files and all modules
+--reset - clears the JUST_TARGET directory and reinstalls
+--debug - do a debug build (override config)
+
+
+builder
+- add all default libs/modules
+- add all app specific libs/modules
+
+- config - allow specifying built in v8 command line options
+- config - configuration option to enable/disable runtime v8 command line switches
+
+- port to arm/pi
+- port to risc-v - https://live-risc-v.pantheonsite.io/blog/2020/08/unlocking-javascript-v8-riscv-open-sourced/
+https://github.com/v8-riscv/v8/wiki
+
+- embed the flamegraph scripts
+
+build any project using same just directory
+
+JUST_TARGET=/home/andrew/.just just build --silent --clean
+
+
+- build: generated files
+.gitignore
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.dockerignore
+{main}.js?
+{index}.js
+
+allow overriding the auto-generated files with an env var to a path with templates
+s2n
+https://github.com/awslabs/s2n
+
+- build: --shared option
+- build: autodiscover dependencies
+- build: config for each module listing object files - can we autodiscover this too?
+- build: 'just init'
+- build: all modules are in lib/{name}.js or lib/{name}/index.js
+- build: they can have files underneath
+- general: when requiring, we lookup the internal cache if we don't find the real file
+- build: option to disallow any external files in require when building
+- build: add the config at a known location so we can look it up and parse it (JSON, not JS)
+- library: allow just.library('foo.so') to load internal first and if that fails to try dlopen
+- docker: naming convention for docker images
+- general: catch all exceptions in c++ and do return codes
+- build: generate dockerfile/.gitignore/.dockerignore when building a project
+- build: docker build in makefile (parameterize dockefile)
+- build: init command to initialize a basic app with a name you provide on command line
+- build: put all the generated files in '.just'
+- general: look at gvisor - we could do similar and reduce syscalls to a subset
+- library: /dev/loop module
+- library: shared memory module
+- build: recurse all the way down the directory - auto-discover the dependencies
+- build: merge libs/modules arrays - .flat()
+- general: allow requiring a string
+- net: remove dependency on linux-headers - linux/if_packet.h
+- general: build on alpine
+```
+export JUST_HOME=$(pwd)
+apk add g++ make curl linux-headers
+```
+
+
 - remove all throws in lib/*.js
 - add shm operation - https://gist.github.com/garcia556/8231e844a90457c99cc72e5add8388e4
 - add file operations

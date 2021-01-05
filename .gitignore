@@ -12,3 +12,5 @@ deps
 *.a
 modules
 examples
+.just
+lib/*/*
