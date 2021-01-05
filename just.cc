@@ -117,12 +117,33 @@ void just::PromiseRejectCallback(PromiseRejectMessage message) {
   HandleScope handle_scope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
   PromiseRejectEvent event = message.GetEvent();
+  Local<Value> value;
+  if (event == v8::PromiseRejectEvent::kPromiseRejectWithNoHandler) {
+    fprintf(stderr, "kPromiseRejectWithNoHandler\n");
+    value = message.GetValue();
+  } else if (event == v8::PromiseRejectEvent::kPromiseHandlerAddedAfterReject) {
+    fprintf(stderr, "kPromiseHandlerAddedAfterReject\n");
+    value = Undefined(isolate);
+  } else if (event == v8::PromiseRejectEvent::kPromiseResolveAfterResolved) {
+    fprintf(stderr, "kPromiseResolveAfterResolved\n");
+    value = message.GetValue();
+  } else if (event == v8::PromiseRejectEvent::kPromiseRejectAfterResolved) {
+    fprintf(stderr, "kPromiseRejectAfterResolved\n");
+    value = message.GetValue();
+  } else {
+    fprintf(stderr, "no promise error\n");
+    return;
+  }
+  if (value.IsEmpty()) value = Undefined(isolate);
   const unsigned int argc = 3;
   Local<Object> globalInstance = context->Global();
   TryCatch try_catch(isolate);
   Local<Value> func = globalInstance->Get(context, 
     String::NewFromUtf8Literal(isolate, "onUnhandledRejection", 
       NewStringType::kNormal)).ToLocalChecked();
+  if (func.IsEmpty()) {
+    return;
+  }
   if (try_catch.HasCaught()) {
     fprintf(stderr, "PromiseRejectCallback: Get\n");
     return;
@@ -132,8 +153,6 @@ void just::PromiseRejectCallback(PromiseRejectMessage message) {
     fprintf(stderr, "PromiseRejectCallback: Cast\n");
     return;
   }
-  Local<Value> value = message.GetValue();
-  if (value.IsEmpty()) value = Undefined(isolate);
   Local<Value> argv[argc] = { promise, value, Integer::New(isolate, event) };
   MaybeLocal<Value> result = onUnhandledRejection->Call(context, globalInstance, 3, argv);
   if (result.IsEmpty() && try_catch.HasCaught()) {
@@ -196,13 +215,8 @@ int just::CreateIsolate(int argc, char** argv,
         NewStringType::kNormal)).ToLocalChecked();
     Local<Object> justInstance = Local<Object>::Cast(obj);
     if (buf != NULL) {
-      // this is memory allocated in the calling isolate so we only want
-      // to unwrap it, not free it when it goes out of scope
-      std::unique_ptr<BackingStore> backing =
-          SharedArrayBuffer::NewBackingStore(buf->iov_base, buf->iov_len, 
-          just::UnwrapMemory, nullptr);
       Local<SharedArrayBuffer> ab =
-          SharedArrayBuffer::New(isolate, std::move(backing));
+          SharedArrayBuffer::New(isolate, buf->iov_base, buf->iov_len, v8::ArrayBufferCreationMode::kExternalized);
       justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
         "buffer", NewStringType::kNormal), ab).Check();
     }
