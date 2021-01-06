@@ -108,11 +108,11 @@ runtime-debug: modules deps/v8/libv8_monolith.a ## build debug version of runtim
 	make main-debug
 
 runtime-static: modules deps/v8/libv8_monolith.a ## build dynamic runtime
-	make MODULE=net module
+	make MODULE=net module-static
 	make MODULE=sys module-static
-	make MODULE=epoll module
-	make MODULE=vm module
-	make MODULE=fs module
+	make MODULE=epoll module-static
+	make MODULE=vm module-static
+	make MODULE=fs module-static
 	make main-static
 
 runtime-static-debug: modules deps/v8/libv8_monolith.a ## build debug version of runtime

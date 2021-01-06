@@ -58,6 +58,8 @@ using v8::PromiseRejectEvent;
 using v8::Uint32Array;
 using v8::BigUint64Array;
 
+ssize_t process_memory_usage();
+
 typedef void *(*register_plugin)();
 struct builtin {
   unsigned int size;
@@ -82,6 +84,8 @@ void PromiseRejectCallback(PromiseRejectMessage message);
 void FreeMemory(void* buf, size_t length, void* data);
 void UnwrapMemory(void* buf, size_t length, void* data);
 void FreeMappedMemory(void* buf, size_t length, void* data);
+
+void MemoryUsage(const FunctionCallbackInfo<Value> &args);
 
 void SET_METHOD(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, FunctionCallback callback);

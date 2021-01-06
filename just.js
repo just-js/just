@@ -306,7 +306,7 @@ function main () {
   just.require.cache = cache
   just.waitForInspector = false
 
-  just.memoryUsage = wrapMemoryUsage(just.sys.memoryUsage)
+  just.memoryUsage = wrapMemoryUsage(just.memoryUsage)
   just.cpuUsage = wrapCpuUsage(just.sys.cpuUsage)
   just.rUsage = wrapgetrUsage(just.sys.getrUsage)
   just.heapUsage = wrapHeapUsage(just.sys.heapUsage)

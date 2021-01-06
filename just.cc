@@ -340,6 +340,76 @@ void just::Builtin(const FunctionCallbackInfo<Value> &args) {
     NewStringType::kNormal, b->size).ToLocalChecked());
 }
 
+ssize_t just::process_memory_usage() {
+  char buf[1024];
+  const char* s = NULL;
+  ssize_t n = 0;
+  unsigned long val = 0;
+  int fd = 0;
+  int i = 0;
+  do {
+    fd = open("/proc/thread-self/stat", O_RDONLY);
+  } while (fd == -1 && errno == EINTR);
+  if (fd == -1) return (ssize_t)errno;
+  do
+    n = read(fd, buf, sizeof(buf) - 1);
+  while (n == -1 && errno == EINTR);
+  close(fd);
+  if (n == -1)
+    return (ssize_t)errno;
+  buf[n] = '\0';
+  s = strchr(buf, ' ');
+  if (s == NULL)
+    goto err;
+  s += 1;
+  if (*s != '(')
+    goto err;
+  s = strchr(s, ')');
+  if (s == NULL)
+    goto err;
+  for (i = 1; i <= 22; i++) {
+    s = strchr(s + 1, ' ');
+    if (s == NULL)
+      goto err;
+  }
+  errno = 0;
+  val = strtoul(s, NULL, 10);
+  if (errno != 0)
+    goto err;
+  return val * (unsigned long)getpagesize();
+err:
+  return 0;
+}
+
+
+void just::MemoryUsage(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  HandleScope handleScope(isolate);
+  ssize_t rss = just::process_memory_usage();
+  HeapStatistics v8_heap_stats;
+  isolate->GetHeapStatistics(&v8_heap_stats);
+  Local<BigUint64Array> array = args[0].As<BigUint64Array>();
+  Local<ArrayBuffer> ab = array->Buffer();
+  std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
+  // todo: why is this double?
+  uint64_t *fields = static_cast<uint64_t *>(backing->Data());
+  fields[0] = rss;
+  fields[1] = v8_heap_stats.total_heap_size();
+  fields[2] = v8_heap_stats.used_heap_size();
+  fields[3] = v8_heap_stats.external_memory();
+  fields[4] = v8_heap_stats.does_zap_garbage();
+  fields[5] = v8_heap_stats.heap_size_limit();
+  fields[6] = v8_heap_stats.malloced_memory();
+  fields[7] = v8_heap_stats.number_of_detached_contexts();
+  fields[8] = v8_heap_stats.number_of_native_contexts();
+  fields[9] = v8_heap_stats.peak_malloced_memory();
+  fields[10] = v8_heap_stats.total_available_size();
+  fields[11] = v8_heap_stats.total_heap_size_executable();
+  fields[12] = v8_heap_stats.total_physical_size();
+  fields[13] = isolate->AdjustAmountOfExternalAllocatedMemory(0);
+  args.GetReturnValue().Set(array);
+}
+
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   Local<ObjectTemplate> version = ObjectTemplate::New(isolate);
   SET_VALUE(isolate, version, "just", String::NewFromUtf8Literal(isolate, 
@@ -366,5 +436,6 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, target, "error", Error);
   SET_METHOD(isolate, target, "load", Load);
   SET_METHOD(isolate, target, "builtin", Builtin);
+  SET_METHOD(isolate, target, "memoryUsage", MemoryUsage);
   SET_MODULE(isolate, target, "version", version);
 }
