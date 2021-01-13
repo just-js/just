@@ -10,11 +10,11 @@ Currently working on modern linux (debian/ubuntu and alpine tested) on x86_64
 
 ```bash
 # download and run the build script
-sh -c "$(curl -sSL https://raw.githubusercontent.com/just-js/just/0.0.17/install.sh)"
+sh -c "$(curl -sSL https://raw.githubusercontent.com/just-js/just/0.0.18/install.sh)"
 # install just binary to /usr/local/bin
-make -C just-0.0.17 install
+make -C just-0.0.18 install
 # export the just home directory
-export JUST_HOME=$(pwd)/just-0.0.17
+export JUST_HOME=$(pwd)/just-0.0.18
 # if you don't want to install, add JUST_HOME to SPATH
 export PATH=$PATH:$JUST_HOME
 # run a shell
