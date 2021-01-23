@@ -70,7 +70,8 @@ extern std::map<std::string, register_plugin> modules;
 void builtins_add (const char* name, const char* source, 
   unsigned int size);
 
-using InitializerCallback = void (*)(Isolate* isolate, Local<ObjectTemplate> exports);
+using InitializerCallback = void (*)(Isolate* isolate, 
+  Local<ObjectTemplate> exports);
 MaybeLocal<Module> OnModuleInstantiate(Local<Context> context, 
   Local<String> specifier, Local<Module> referrer);
 
@@ -84,8 +85,6 @@ void PromiseRejectCallback(PromiseRejectMessage message);
 void FreeMemory(void* buf, size_t length, void* data);
 void UnwrapMemory(void* buf, size_t length, void* data);
 void FreeMappedMemory(void* buf, size_t length, void* data);
-
-void MemoryUsage(const FunctionCallbackInfo<Value> &args);
 
 void SET_METHOD(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, FunctionCallback callback);
@@ -101,8 +100,8 @@ void Sleep(const FunctionCallbackInfo<Value> &args);
 void PID(const FunctionCallbackInfo<Value> &args);
 void Exit(const FunctionCallbackInfo<Value> &args);
 void Chdir(const FunctionCallbackInfo<Value> &args);
-//void Snapshot(const FunctionCallbackInfo<Value> &args);
 void Builtin(const FunctionCallbackInfo<Value> &args);
+void MemoryUsage(const FunctionCallbackInfo<Value> &args);
 
 void Init(Isolate* isolate, Local<ObjectTemplate> target);
 

@@ -3,8 +3,6 @@
 #include <signal.h>
 
 int main(int argc, char** argv) {
-  // set no buffering on stdio. this will only affect sys.print, sys.error and
-  // internal v8 error messages that may be written to stdio
   setvbuf(stdout, nullptr, _IONBF, 0);
   setvbuf(stderr, nullptr, _IONBF, 0);
   signal(SIGPIPE, SIG_IGN);

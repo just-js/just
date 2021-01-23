@@ -3,6 +3,47 @@
 std::map<std::string, just::builtin*> just::builtins;
 std::map<std::string, just::register_plugin> just::modules;
 
+ssize_t just::process_memory_usage() {
+  char buf[1024];
+  const char* s = NULL;
+  ssize_t n = 0;
+  unsigned long val = 0;
+  int fd = 0;
+  int i = 0;
+  do {
+    fd = open("/proc/thread-self/stat", O_RDONLY);
+  } while (fd == -1 && errno == EINTR);
+  if (fd == -1) return (ssize_t)errno;
+  do
+    n = read(fd, buf, sizeof(buf) - 1);
+  while (n == -1 && errno == EINTR);
+  close(fd);
+  if (n == -1)
+    return (ssize_t)errno;
+  buf[n] = '\0';
+  s = strchr(buf, ' ');
+  if (s == NULL)
+    goto err;
+  s += 1;
+  if (*s != '(')
+    goto err;
+  s = strchr(s, ')');
+  if (s == NULL)
+    goto err;
+  for (i = 1; i <= 22; i++) {
+    s = strchr(s + 1, ' ');
+    if (s == NULL)
+      goto err;
+  }
+  errno = 0;
+  val = strtoul(s, NULL, 10);
+  if (errno != 0)
+    goto err;
+  return val * (unsigned long)getpagesize();
+err:
+  return 0;
+}
+
 void just::builtins_add (const char* name, const char* source, 
   unsigned int size) {
   struct builtin* b = new builtin();
@@ -71,40 +112,6 @@ void just::PrintStackTrace(Isolate* isolate, const TryCatch& try_catch) {
   fflush(stderr);
 }
 
-void just::Print(const FunctionCallbackInfo<Value> &args) {
-  Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
-  if (args[0].IsEmpty()) return;
-  String::Utf8Value str(args.GetIsolate(), args[0]);
-  int endline = 1;
-  if (args.Length() > 1) {
-    endline = static_cast<int>(args[1]->BooleanValue(isolate));
-  }
-  const char *cstr = *str;
-  if (endline == 1) {
-    fprintf(stdout, "%s\n", cstr);
-  } else {
-    fprintf(stdout, "%s", cstr);
-  }
-}
-
-void just::Error(const FunctionCallbackInfo<Value> &args) {
-  Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
-  if (args[0].IsEmpty()) return;
-  String::Utf8Value str(args.GetIsolate(), args[0]);
-  int endline = 1;
-  if (args.Length() > 1) {
-    endline = static_cast<int>(args[1]->BooleanValue(isolate));
-  }
-  const char *cstr = *str;
-  if (endline == 1) {
-    fprintf(stderr, "%s\n", cstr);
-  } else {
-    fprintf(stderr, "%s", cstr);
-  }
-}
-
 v8::MaybeLocal<v8::Module> just::OnModuleInstantiate(Local<Context> context, 
   Local<String> specifier, Local<Module> referrer) {
   HandleScope handle_scope(context->GetIsolate());
@@ -154,7 +161,8 @@ void just::PromiseRejectCallback(PromiseRejectMessage message) {
     return;
   }
   Local<Value> argv[argc] = { promise, value, Integer::New(isolate, event) };
-  MaybeLocal<Value> result = onUnhandledRejection->Call(context, globalInstance, 3, argv);
+  MaybeLocal<Value> result = onUnhandledRejection->Call(context, 
+    globalInstance, 3, argv);
   if (result.IsEmpty() && try_catch.HasCaught()) {
     fprintf(stderr, "PromiseRejectCallback: Call\n");
   }
@@ -166,7 +174,8 @@ void just::FreeMemory(void* buf, size_t length, void* data) {
   // todo: what do we do with *data?
 }
 
-// called when wrapping arraybuffer is gc'd and we don't want to free the underlying memory
+// called when wrapping arraybuffer is gc'd and we don't want to free 
+// the underlying memory
 void just::UnwrapMemory(void* buf, size_t length, void* data) {
 
 }
@@ -216,7 +225,8 @@ int just::CreateIsolate(int argc, char** argv,
     Local<Object> justInstance = Local<Object>::Cast(obj);
     if (buf != NULL) {
       Local<SharedArrayBuffer> ab =
-          SharedArrayBuffer::New(isolate, buf->iov_base, buf->iov_len, v8::ArrayBufferCreationMode::kExternalized);
+          SharedArrayBuffer::New(isolate, buf->iov_base, buf->iov_len, 
+          v8::ArrayBufferCreationMode::kExternalized);
       justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
         "buffer", NewStringType::kNormal), ab).Check();
     }
@@ -298,13 +308,45 @@ int just::CreateIsolate(int argc, char** argv,
   return statusCode;
 }
 
-int just::CreateIsolate(int argc, char** argv, const char* main_src, unsigned int main_len) {
+int just::CreateIsolate(int argc, char** argv, const char* main_src, 
+  unsigned int main_len) {
   return CreateIsolate(argc, argv, main_src, main_len, NULL, 0, NULL, 0);
+}
+
+void just::Print(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  if (args[0].IsEmpty()) return;
+  String::Utf8Value str(args.GetIsolate(), args[0]);
+  int endline = 1;
+  if (args.Length() > 1) {
+    endline = static_cast<int>(args[1]->BooleanValue(isolate));
+  }
+  const char *cstr = *str;
+  if (endline == 1) {
+    fprintf(stdout, "%s\n", cstr);
+  } else {
+    fprintf(stdout, "%s", cstr);
+  }
+}
+
+void just::Error(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  if (args[0].IsEmpty()) return;
+  String::Utf8Value str(args.GetIsolate(), args[0]);
+  int endline = 1;
+  if (args.Length() > 1) {
+    endline = static_cast<int>(args[1]->BooleanValue(isolate));
+  }
+  const char *cstr = *str;
+  if (endline == 1) {
+    fprintf(stderr, "%s\n", cstr);
+  } else {
+    fprintf(stderr, "%s", cstr);
+  }
 }
 
 void just::Load(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
   Local<ObjectTemplate> exports = ObjectTemplate::New(isolate);
   if (args[0]->IsString()) {
@@ -329,7 +371,6 @@ void just::Load(const FunctionCallbackInfo<Value> &args) {
 
 void just::Builtin(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
   String::Utf8Value name(isolate, args[0]);
   just::builtin* b = builtins[*name];
   if (b == nullptr) {
@@ -340,67 +381,25 @@ void just::Builtin(const FunctionCallbackInfo<Value> &args) {
     NewStringType::kNormal, b->size).ToLocalChecked());
 }
 
-ssize_t just::process_memory_usage() {
-  char buf[1024];
-  const char* s = NULL;
-  ssize_t n = 0;
-  unsigned long val = 0;
-  int fd = 0;
-  int i = 0;
-  do {
-    fd = open("/proc/thread-self/stat", O_RDONLY);
-  } while (fd == -1 && errno == EINTR);
-  if (fd == -1) return (ssize_t)errno;
-  do
-    n = read(fd, buf, sizeof(buf) - 1);
-  while (n == -1 && errno == EINTR);
-  close(fd);
-  if (n == -1)
-    return (ssize_t)errno;
-  buf[n] = '\0';
-  s = strchr(buf, ' ');
-  if (s == NULL)
-    goto err;
-  s += 1;
-  if (*s != '(')
-    goto err;
-  s = strchr(s, ')');
-  if (s == NULL)
-    goto err;
-  for (i = 1; i <= 22; i++) {
-    s = strchr(s + 1, ' ');
-    if (s == NULL)
-      goto err;
-  }
-  errno = 0;
-  val = strtoul(s, NULL, 10);
-  if (errno != 0)
-    goto err;
-  return val * (unsigned long)getpagesize();
-err:
-  return 0;
-}
-
 void just::Sleep(const FunctionCallbackInfo<Value> &args) {
   sleep(Local<Integer>::Cast(args[0])->Value());
 }
 
 void just::MemoryUsage(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
-  HandleScope handleScope(isolate);
   ssize_t rss = just::process_memory_usage();
   HeapStatistics v8_heap_stats;
   isolate->GetHeapStatistics(&v8_heap_stats);
   Local<BigUint64Array> array;
+  Local<ArrayBuffer> ab;
   if (args.Length() > 0) {
     array = args[0].As<BigUint64Array>();
+    ab = array->Buffer();
   } else {
-    Local<ArrayBuffer> ab = ArrayBuffer::New(isolate, 16 * 8);
+    ab = ArrayBuffer::New(isolate, 16 * 8);
     array = BigUint64Array::New(ab, 0, 16);
   }
-  Local<ArrayBuffer> ab = array->Buffer();
   std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
-  // todo: why is this double?
   uint64_t *fields = static_cast<uint64_t *>(backing->Data());
   fields[0] = rss;
   fields[1] = v8_heap_stats.total_heap_size();
