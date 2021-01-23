@@ -97,6 +97,10 @@ void SET_VALUE(Isolate *isolate, Local<ObjectTemplate>
 void Print(const FunctionCallbackInfo<Value> &args);
 void Error(const FunctionCallbackInfo<Value> &args);
 void Load(const FunctionCallbackInfo<Value> &args);
+void Sleep(const FunctionCallbackInfo<Value> &args);
+void PID(const FunctionCallbackInfo<Value> &args);
+void Exit(const FunctionCallbackInfo<Value> &args);
+void Chdir(const FunctionCallbackInfo<Value> &args);
 //void Snapshot(const FunctionCallbackInfo<Value> &args);
 void Builtin(const FunctionCallbackInfo<Value> &args);
 

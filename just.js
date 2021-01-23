@@ -230,8 +230,12 @@ function setNonBlocking (fd) {
 }
 
 function parseArgs (args) {
-  const opts = { args }
+  const opts = {}
   args = args.filter(arg => {
+    if (arg === '--bare') {
+      opts.bare = true
+      return false
+    }
     if (arg === '--clean') {
       opts.clean = true
       return false
@@ -258,10 +262,11 @@ function parseArgs (args) {
     }
     return true
   })
+  opts.args = args
   return opts
 }
 
-function main () {
+function main (opts) {
   const { library, cache } = wrapLibrary()
 
   // load the builtin modules
@@ -313,9 +318,7 @@ function main () {
   just.hrtime = wrapHrtime(just.sys.hrtime)
 
   delete global.console
-  const opts = parseArgs(just.args)
   just.waitForInspector = opts.inspector
-  just.args = opts.args
 
   function startup () {
     if (!just.args.length) return true
@@ -399,4 +402,10 @@ function main () {
   if (!startup()) just.factory.run()
 }
 
-main()
+const opts = parseArgs(just.args)
+just.args = opts.args
+if (opts.bare) {
+  just.load('vm').vm.runScript(just.args[1], 'eval')
+} else {
+  main(opts)
+}

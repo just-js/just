@@ -11,8 +11,6 @@ int main(int argc, char** argv) {
   std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
   v8::V8::InitializePlatform(platform.get());
   v8::V8::Initialize();
-  // TODO: make these config/build options
-  //v8::V8::EnableWebAssemblyTrapHandler(true);
   v8::V8::SetFlagsFromString(v8flags);
   if (_v8flags_from_commandline == 1) {
     v8::V8::SetFlagsFromCommandLine(&argc, argv, true);

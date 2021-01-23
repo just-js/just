@@ -381,6 +381,9 @@ err:
   return 0;
 }
 
+void just::Sleep(const FunctionCallbackInfo<Value> &args) {
+  sleep(Local<Integer>::Cast(args[0])->Value());
+}
 
 void just::MemoryUsage(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
@@ -388,7 +391,13 @@ void just::MemoryUsage(const FunctionCallbackInfo<Value> &args) {
   ssize_t rss = just::process_memory_usage();
   HeapStatistics v8_heap_stats;
   isolate->GetHeapStatistics(&v8_heap_stats);
-  Local<BigUint64Array> array = args[0].As<BigUint64Array>();
+  Local<BigUint64Array> array;
+  if (args.Length() > 0) {
+    array = args[0].As<BigUint64Array>();
+  } else {
+    Local<ArrayBuffer> ab = ArrayBuffer::New(isolate, 16 * 8);
+    array = BigUint64Array::New(ab, 0, 16);
+  }
   Local<ArrayBuffer> ab = array->Buffer();
   std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
   // todo: why is this double?
@@ -408,6 +417,20 @@ void just::MemoryUsage(const FunctionCallbackInfo<Value> &args) {
   fields[12] = v8_heap_stats.total_physical_size();
   fields[13] = isolate->AdjustAmountOfExternalAllocatedMemory(0);
   args.GetReturnValue().Set(array);
+}
+
+void just::Exit(const FunctionCallbackInfo<Value>& args) {
+  exit(Local<Integer>::Cast(args[0])->Value());
+}
+
+void just::PID(const FunctionCallbackInfo<Value> &args) {
+  args.GetReturnValue().Set(Integer::New(args.GetIsolate(), getpid()));
+}
+
+void just::Chdir(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  String::Utf8Value path(isolate, args[0]);
+  args.GetReturnValue().Set(Integer::New(isolate, chdir(*path)));
 }
 
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
@@ -435,6 +458,10 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, target, "print", Print);
   SET_METHOD(isolate, target, "error", Error);
   SET_METHOD(isolate, target, "load", Load);
+  SET_METHOD(isolate, target, "exit", Exit);
+  SET_METHOD(isolate, target, "pid", PID);
+  SET_METHOD(isolate, target, "chdir", Chdir);
+  SET_METHOD(isolate, target, "sleep", Sleep);
   SET_METHOD(isolate, target, "builtin", Builtin);
   SET_METHOD(isolate, target, "memoryUsage", MemoryUsage);
   SET_MODULE(isolate, target, "version", version);
