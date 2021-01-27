@@ -404,6 +404,7 @@ function main (opts) {
 
 const opts = parseArgs(just.args)
 just.args = opts.args
+just.opts = opts
 if (opts.bare) {
   just.load('vm').vm.runScript(just.args[1], 'eval')
 } else {
