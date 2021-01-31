@@ -359,11 +359,14 @@ function main (opts) {
       if (!buildModule) throw new Error('Build not Available')
       let config
       if (just.args.length > 2 && just.args[2].indexOf('.js') > -1) {
-        config = just.require('configure').configure(just.args[2], opts)
+        config = just.require('configure').run(just.args[2], opts)
       } else {
         config = require(just.args[2] || 'config.json') || require('config.js') || {}
       }
       buildModule.run(config, opts)
+        .then(cfg => {
+          if (opts.dump) just.print(JSON.stringify(cfg, null, '  '))
+        })
         .catch(err => just.error(err.stack))
       return
     }
