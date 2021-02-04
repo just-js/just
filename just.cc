@@ -377,8 +377,13 @@ void just::Builtin(const FunctionCallbackInfo<Value> &args) {
     args.GetReturnValue().Set(Null(isolate));
     return;
   }
-  args.GetReturnValue().Set(String::NewFromUtf8(isolate, b->source, 
-    NewStringType::kNormal, b->size).ToLocalChecked());
+  if (args.Length() == 1) {
+    args.GetReturnValue().Set(String::NewFromUtf8(isolate, b->source, 
+      NewStringType::kNormal, b->size).ToLocalChecked());
+    return;
+  }
+  Local<ArrayBuffer> ab = ArrayBuffer::New(isolate, (void*)b->source, b->size, v8::ArrayBufferCreationMode::kExternalized);
+  args.GetReturnValue().Set(ab);
 }
 
 void just::Sleep(const FunctionCallbackInfo<Value> &args) {

@@ -20,7 +20,7 @@ const modules = [{
   obj: [
     'modules/sys/sys.o'
   ],
-  lib: ['dl']
+  lib: ['dl', 'rt']
 }, {
   name: 'fs',
   obj: [
