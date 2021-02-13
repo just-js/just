@@ -149,10 +149,10 @@ function wrapRequire (cache = {}) {
   }
 
   function require (path, parent = { dirName: appRoot }) {
-    if (path[0] === '@') path = `${appRoot}/lib/${path.slice(1)}/${just.path.fileName(path.slice(1))}.js`
+    const { join, baseName, fileName } = just.path
+    if (path[0] === '@') path = `${appRoot}/lib/${path.slice(1)}/${fileName(path.slice(1))}.js`
     const ext = path.split('.').slice(-1)[0]
     if (ext === 'js' || ext === 'json') {
-      const { join, baseName } = just.path
       let dirName = parent.dirName
       const fileName = join(dirName, path)
       if (cache[fileName]) return cache[fileName].exports
@@ -183,7 +183,7 @@ function wrapRequire (cache = {}) {
       }
       return module.exports
     }
-    return just.requireNative(path, parent)
+    return requireNative(path, parent)
   }
 
   return { requireNative, require, cache }
@@ -232,32 +232,8 @@ function setNonBlocking (fd) {
 function parseArgs (args) {
   const opts = {}
   args = args.filter(arg => {
-    if (arg === '--bare') {
-      opts.bare = true
-      return false
-    }
-    if (arg === '--clean') {
-      opts.clean = true
-      return false
-    }
-    if (arg === '--cleanall') {
-      opts.cleanall = true
-      return false
-    }
-    if (arg === '--silent') {
-      opts.silent = true
-      return false
-    }
-    if (arg === '--inspector') {
-      opts.inspector = true
-      return false
-    }
-    if (arg === '--dump') {
-      opts.dump = true
-      return false
-    }
-    if (arg === '--static') {
-      opts.static = true
+    if (arg.slice(0, 2) === '--') {
+      opts[arg.slice(2)] = true
       return false
     }
     return true
@@ -309,7 +285,6 @@ function main (opts) {
   just.sys.setNonBlocking = setNonBlocking
   just.require = global.require = require
   just.require.cache = cache
-  just.waitForInspector = false
 
   just.memoryUsage = wrapMemoryUsage(just.memoryUsage)
   just.cpuUsage = wrapCpuUsage(just.sys.cpuUsage)
@@ -318,7 +293,14 @@ function main (opts) {
   just.hrtime = wrapHrtime(just.sys.hrtime)
 
   delete global.console
-  just.waitForInspector = opts.inspector
+
+  function freezeIntrinsics () {
+    if (just.opts.freeze) {
+      const freeze = requireNative('freeze')
+      if (!freeze) throw new Error('freeze is not available in runtime')
+      freeze()
+    }
+  }
 
   function startup () {
     if (!just.args.length) return true
@@ -386,7 +368,7 @@ function main (opts) {
     just.vm.runScript(just.fs.readFile(just.args[1]), scriptName)
   }
 
-  if (just.waitForInspector) {
+  if (opts.inspector) {
     const inspectorLib = just.library('inspector')
     if (!inspectorLib) throw new SystemError('inspector module is not enabled')
     just.inspector = inspectorLib.inspector
