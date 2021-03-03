@@ -160,6 +160,7 @@ function wrapRequire (cache = {}) {
       const params = ['exports', 'require', 'module']
       const exports = {}
       const module = { exports, dirName, fileName, type: ext }
+      // todo: this is not secure
       if (just.fs.isFile(fileName)) {
         module.text = just.fs.readFile(fileName)
       } else {
@@ -194,7 +195,7 @@ function setTimeout (callback, timeout, repeat = 0, loop = just.factory.loop) {
   const timerfd = just.sys.timer(repeat, timeout)
   loop.add(timerfd, (fd, event) => {
     callback()
-    just.net.read(fd, buf)
+    just.net.read(fd, buf, 0, buf.byteLength)
     if (repeat === 0) {
       loop.remove(fd)
       just.net.close(fd)
@@ -273,7 +274,8 @@ function main (opts) {
   just.config = requireNative('config')
   just.path = requireNative('path')
   just.factory = requireNative('loop').factory
-  just.factory.loop = just.factory.create(1024)
+  // todo - remove this call at startup
+  just.factory.loop = just.factory.create(128)
   just.process = requireNative('process')
 
   just.setTimeout = setTimeout
@@ -324,10 +326,10 @@ function main (opts) {
       // todo: allow streaming in multiple scripts with a separator and running them all
       const buf = new ArrayBuffer(4096)
       const chunks = []
-      let bytes = just.net.read(just.sys.STDIN_FILENO, buf)
+      let bytes = just.net.read(just.sys.STDIN_FILENO, buf, 0, buf.byteLength)
       while (bytes > 0) {
         chunks.push(buf.readString(bytes))
-        bytes = just.net.read(just.sys.STDIN_FILENO, buf)
+        bytes = just.net.read(just.sys.STDIN_FILENO, buf, 0, buf.byteLength)
       }
       just.vm.runScript(chunks.join(''), 'stdin')
       return
@@ -367,7 +369,6 @@ function main (opts) {
     const scriptName = just.path.join(just.sys.cwd(), just.args[1])
     just.vm.runScript(just.fs.readFile(just.args[1]), scriptName)
   }
-
   if (opts.inspector) {
     const inspectorLib = just.library('inspector')
     if (!inspectorLib) throw new SystemError('inspector module is not enabled')
@@ -376,12 +377,31 @@ function main (opts) {
     Object.assign(just.inspector, require('inspector'))
     just.encode = library('encode').encode
     just.sha1 = library('sha1').sha1
+    global.process = {
+      pid: just.sys.pid(),
+      version: 'v15.6.0',
+      arch: 'x64',
+      env: just.env()
+    }
+    const _require = global.require
+    global.require = (name, path) => {
+      if (name === 'module') {
+        return [
+          "fs",
+          "process",
+          "repl"
+        ]
+      }
+      return _require(name, path)
+    }
     global.inspector = just.inspector.createInspector({
       title: 'Just!',
-      onReady: startup
+      onReady: () => {
+        if (!startup()) just.factory.run()
+      }
     })
     just.inspector.enable()
-    just.factory.run()
+    just.factory.run(1)
     return
   }
   if (!startup()) just.factory.run()

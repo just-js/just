@@ -6,7 +6,10 @@ const libs = [
   'lib/build.js',
   'lib/repl.js',
   'lib/configure.js',
-  'lib/acorn.js'
+  'lib/acorn.js',
+  'lib/inspector.js',
+  'lib/websocket.js',
+  'lib/main.js'
 ]
 
 const version = just.version.just
@@ -41,6 +44,21 @@ const modules = [{
   obj: [
     'modules/epoll/epoll.o'
   ]
+}, {
+  name: 'inspector',
+  obj: [
+    'modules/inspector/inspector.o'
+  ]
+}, {
+  name: 'sha1',
+  obj: [
+    'modules/sha1/sha1.o'
+  ]
+}, {
+  name: 'encode',
+  obj: [
+    'modules/encode/encode.o'
+  ]
 }]
 
 const embeds = [
@@ -49,8 +67,6 @@ const embeds = [
   'main.cc',
   'just.h',
   'just.js',
-  'lib/inspector.js',
-  'lib/websocket.js',
   'config.js'
 ]
 
