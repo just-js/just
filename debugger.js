@@ -6,13 +6,14 @@ const libs = [
   'lib/build.js',
   'lib/repl.js',
   'lib/configure.js',
-  'lib/acorn.js'
+  'lib/acorn.js',
+  'lib/websocket.js',
+  'lib/inspector.js'
 ]
 
 const version = just.version.just
-const v8flags = '--stack-trace-limit=10 --use-strict --disallow-code-generation-from-strings'
-const v8flagsFromCommandLine = true
-const debug = false
+const v8flags = ''
+const debug = true
 const capabilities = [] // list of allowed internal modules, api calls etc. TBD
 
 const modules = [{
@@ -22,14 +23,35 @@ const modules = [{
   ],
   lib: ['dl', 'rt']
 }, {
+  name: 'sha1',
+  obj: [
+    'modules/sha1/sha1.o'
+  ]
+}, {
+  name: 'encode',
+  obj: [
+    'modules/encode/encode.o'
+  ]
+}, {
   name: 'fs',
   obj: [
     'modules/fs/fs.o'
   ]
 }, {
+  name: 'inspector',
+  obj: [
+    'modules/inspector/inspector.o'
+  ]
+}, {
   name: 'net',
   obj: [
     'modules/net/net.o'
+  ]
+}, {
+  name: 'http',
+  obj: [
+    'modules/http/http.o',
+    'modules/http/picohttpparser.o'
   ]
 }, {
   name: 'vm',
@@ -55,4 +77,4 @@ const embeds = [
 const target = 'just'
 const main = 'just.js'
 
-module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds, static: false, debug, v8flagsFromCommandLine }
+module.exports = { version, libs, modules, capabilities, target, main, v8flags, embeds, static: false, debug }

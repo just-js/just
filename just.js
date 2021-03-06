@@ -342,10 +342,14 @@ function main (opts) {
       const buildModule = just.require('build')
       if (!buildModule) throw new Error('Build not Available')
       let config
-      if (just.args.length > 2 && just.args[2].indexOf('.js') > -1) {
-        config = just.require('configure').run(just.args[2], opts)
+      if (just.opts.config) {
+        config = require(just.args[2]) || {}
       } else {
-        config = require(just.args[2] || 'config.json') || require('config.js') || {}
+        if (just.args.length > 2) {
+          config = just.require('configure').run(just.args[2], opts)
+        } else {
+          config = require(just.args[2] || 'config.json') || require('config.js') || {}
+        }
       }
       buildModule.run(config, opts)
         .then(cfg => {
