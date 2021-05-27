@@ -16,6 +16,15 @@ https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-cont
 git clone git@github.com:just-js/just.git
 ```
 
+# Checkout a Specific Branch
+
+main branch may be broken at any moment in time (until we finalise a better process for release management) so you may want to checkout a specific release tag
+
+```
+cd just
+git checkout 0.0.22
+```
+
 # Start in VSCode
 
 - open the 'just' folder in vscode
@@ -27,15 +36,10 @@ you should be prompted to "Reopen in Container". Click that button.
 
 # VSCode Terminal Commands
 
-## export JUST_HOME env var
-```
-JUST_HOME=$(pwd)/just
-```
 ## build the runtime and install it
 
-from the "just" folder you just cloned
 ```
-make runtime-static
+make clean runtime
 sudo make install
 ```
 
@@ -67,14 +71,14 @@ sudo make -C modules/fib install
 create a script: examples/fib.js
 
 ```Javascript
-const { fib } = just.library('fib.so', 'fib')
+const { fib } = just.library('fib')
 just.print('fib: ' + fib.calculate(parseInt(just.args[2] || '1', 10)))
 ```
 
 or eval from the shell
 
 ```bash
-just eval "just.print(just.library('fib.so', 'fib').fib.calculate(parseInt(just.args[3], 10)))" 42
+just eval "just.print(just.library('fib').fib.calculate(parseInt(just.args[3], 10)))" 42
 ```
 
 # C++ Extension and Intellisense
