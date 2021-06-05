@@ -1,6 +1,6 @@
 # Just
 
-A very small v8 javascript runtime for linux only
+A very small and fast v8 javascript runtime for linux x86_64 only.
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/just-js/binder/HEAD)
 
