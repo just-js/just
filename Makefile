@@ -99,7 +99,7 @@ runtime: modules deps/v8/libv8_monolith.a ## build dynamic runtime
 	make MODULE=fs module
 	make main
 
-runtime-debug: modules deps/v8/libv8_monolith.a ## build debug version of runtime
+runtime-debug: modules deps/v8/libv8_monolith.a ## build debug runtime
 	make MODULE=net module-debug
 	make MODULE=sys module-debug
 	make MODULE=epoll module-debug
@@ -107,7 +107,7 @@ runtime-debug: modules deps/v8/libv8_monolith.a ## build debug version of runtim
 	make MODULE=fs module-debug
 	make main-debug
 
-runtime-static: modules deps/v8/libv8_monolith.a ## build dynamic runtime
+runtime-static: modules deps/v8/libv8_monolith.a ## build static runtime
 	make MODULE=net module-static
 	make MODULE=sys module-static
 	make MODULE=epoll module-static
@@ -115,7 +115,7 @@ runtime-static: modules deps/v8/libv8_monolith.a ## build dynamic runtime
 	make MODULE=fs module-static
 	make main-static
 
-runtime-static-debug: modules deps/v8/libv8_monolith.a ## build debug version of runtime
+runtime-static-debug: modules deps/v8/libv8_monolith.a ## build debug static runtime
 	make MODULE=net module-debug
 	make MODULE=sys module-static-debug
 	make MODULE=epoll module-debug
