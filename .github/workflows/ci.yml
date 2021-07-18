@@ -27,7 +27,7 @@ jobs:
 
       - name: Build
         run:
-          make runtime
+          make runtime-static
 
       - name: Binary publish
         uses: softprops/action-gh-release@v1

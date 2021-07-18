@@ -49,7 +49,9 @@ const embeds = [
   'main.cc',
   'just.h',
   'just.js',
-  'config.js'
+  'config.js',
+  'lib/websocket.js',
+  'lib/inspector.js'
 ]
 
 const target = 'just'
