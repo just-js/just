@@ -185,6 +185,13 @@ void just::FreeMappedMemory(void* buf, size_t length, void* data) {
   munmap(buf, length);
 }
 
+v8::MaybeLocal<v8::Module> just::ResolveModuleCallback(Local<Context> context,
+                                         Local<String> specifier,
+                                         Local<v8::FixedArray> import_assertions,
+                                         Local<v8::Module> referrer) {
+
+}
+
 int just::CreateIsolate(int argc, char** argv, 
   const char* main_src, unsigned int main_len, 
   const char* js, unsigned int js_len, struct iovec* buf, int fd) {
@@ -224,9 +231,9 @@ int just::CreateIsolate(int argc, char** argv,
         NewStringType::kNormal)).ToLocalChecked();
     Local<Object> justInstance = Local<Object>::Cast(obj);
     if (buf != NULL) {
-      Local<SharedArrayBuffer> ab =
-          SharedArrayBuffer::New(isolate, buf->iov_base, buf->iov_len, 
-          v8::ArrayBufferCreationMode::kExternalized);
+      std::unique_ptr<BackingStore> backing = ArrayBuffer::NewBackingStore(
+          buf->iov_base, buf->iov_len, [](void*, size_t, void*){}, nullptr);
+      Local<SharedArrayBuffer> ab = SharedArrayBuffer::New(isolate, std::move(backing));
       justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
         "buffer", NewStringType::kNormal), ab).Check();
     }
@@ -266,7 +273,7 @@ int just::CreateIsolate(int argc, char** argv,
       return 1;
     }
     Maybe<bool> ok = module->InstantiateModule(context, 
-      NULL);
+      ResolveModuleCallback);
     if (!ok.ToChecked()) {
       just::PrintStackTrace(isolate, try_catch);
       return 1;
@@ -382,7 +389,12 @@ void just::Builtin(const FunctionCallbackInfo<Value> &args) {
       NewStringType::kNormal, b->size).ToLocalChecked());
     return;
   }
-  Local<ArrayBuffer> ab = ArrayBuffer::New(isolate, (void*)b->source, b->size, v8::ArrayBufferCreationMode::kExternalized);
+
+  std::unique_ptr<BackingStore> backing = ArrayBuffer::NewBackingStore(
+      (void*)b->source, b->size, [](void*, size_t, void*){}, nullptr);
+  Local<SharedArrayBuffer> ab = SharedArrayBuffer::New(isolate, std::move(backing));
+
+  //Local<ArrayBuffer> ab = ArrayBuffer::New(isolate, (void*)b->source, b->size, v8::ArrayBufferCreationMode::kExternalized);
   args.GetReturnValue().Set(ab);
 }
 

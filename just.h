@@ -103,6 +103,9 @@ void Chdir(const FunctionCallbackInfo<Value> &args);
 void Builtin(const FunctionCallbackInfo<Value> &args);
 void MemoryUsage(const FunctionCallbackInfo<Value> &args);
 
+v8::MaybeLocal<v8::Module> ResolveModuleCallback(Local<Context> context, Local<String> specifier, Local<v8::FixedArray> import_assertions, Local<v8::Module> referrer);
+
+
 void Init(Isolate* isolate, Local<ObjectTemplate> target);
 
 }

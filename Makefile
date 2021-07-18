@@ -1,5 +1,5 @@
 CC=g++
-RELEASE=0.0.22
+RELEASE=0.1.0
 INSTALL=/usr/local/bin
 LIBS=lib/loop.js lib/path.js lib/fs.js lib/process.js lib/build.js lib/repl.js lib/acorn.js lib/configure.js
 MODULES=modules/net/net.o modules/epoll/epoll.o modules/fs/fs.o modules/sys/sys.o modules/vm/vm.o
@@ -72,9 +72,11 @@ builtins.o: just.cc just.h Makefile main.cc ## compile builtins with build depen
 	gcc builtins.S -c -o builtins.o
 
 main: modules builtins.o deps/v8/libv8_monolith.a
-	$(CC) -c ${FLAGS} -DJUST_VERSION='"${RELEASE}"' -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c ${FLAGS} -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-	$(CC) -s -rdynamic -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group ${LFLAG} ${LIB} -o ${TARGET} -Wl,-rpath=/usr/local/lib/just
+	$(CC) -c ${FLAGS} -DJUST_VERSION='"${RELEASE}"' -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
+	$(CC) -c ${FLAGS} -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
+	$(CC) -g -rdynamic -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group ${LFLAG} ${LIB} -o ${TARGET} -Wl,-rpath=/usr/local/lib/just
+	objcopy --only-keep-debug just just.debug
+	strip --strip-debug --strip-unneeded just
 
 main-debug: modules builtins.o deps/v8/libv8_monolith.a
 	$(CC) -c ${FLAGS} -DJUST_VERSION='"${RELEASE}"' -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
@@ -136,8 +138,10 @@ cleanall: ## remove just and build deps
 	make clean
 
 install: ## install
-	mkdir -p ${INSTALL}
+	mkdir -p ${INSTALL}/.debug
 	cp -f ${TARGET} ${INSTALL}/${TARGET}
+	cp -f ${TARGET}.debug ${INSTALL}/.debug/${TARGET}.debug
+	objcopy --add-gnu-debuglink=${INSTALL}/${TARGET} ${INSTALL}/.debug/${TARGET}.debug
 
 uninstall: ## uninstall
 	rm -f ${INSTALL}/${TARGET}
