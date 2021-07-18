@@ -118,41 +118,37 @@ v8::MaybeLocal<v8::Module> just::OnModuleInstantiate(Local<Context> context,
   return MaybeLocal<Module>();
 }
 
-void just::PromiseRejectCallback(PromiseRejectMessage message) {
-  Local<Promise> promise = message.GetPromise();
-  Isolate* isolate = promise->GetIsolate();
-  HandleScope handle_scope(isolate);
-  Local<Context> context = isolate->GetCurrentContext();
-  PromiseRejectEvent event = message.GetEvent();
-  Local<Value> value;
-  if (event == v8::PromiseRejectEvent::kPromiseRejectWithNoHandler) {
-    fprintf(stderr, "kPromiseRejectWithNoHandler\n");
-    value = message.GetValue();
-  } else if (event == v8::PromiseRejectEvent::kPromiseHandlerAddedAfterReject) {
-    fprintf(stderr, "kPromiseHandlerAddedAfterReject\n");
-    value = Undefined(isolate);
-  } else if (event == v8::PromiseRejectEvent::kPromiseResolveAfterResolved) {
-    fprintf(stderr, "kPromiseResolveAfterResolved\n");
-    value = message.GetValue();
-  } else if (event == v8::PromiseRejectEvent::kPromiseRejectAfterResolved) {
-    fprintf(stderr, "kPromiseRejectAfterResolved\n");
-    value = message.GetValue();
-  } else {
-    fprintf(stderr, "no promise error\n");
+void just::PromiseRejectCallback(PromiseRejectMessage data) {
+  if (data.GetEvent() == v8::kPromiseRejectAfterResolved ||
+      data.GetEvent() == v8::kPromiseResolveAfterResolved) {
+    // Ignore reject/resolve after resolved.
     return;
   }
-  if (value.IsEmpty()) value = Undefined(isolate);
-  const unsigned int argc = 3;
-  Local<Object> globalInstance = context->Global();
+  Local<Promise> promise = data.GetPromise();
+  Isolate* isolate = promise->GetIsolate();
+  if (data.GetEvent() == v8::kPromiseHandlerAddedAfterReject) {
+    return;
+  }
+  Local<Value> exception = data.GetValue();
+  v8::Local<Message> message;
+  // Assume that all objects are stack-traces.
+  if (exception->IsObject()) {
+    message = v8::Exception::CreateMessage(isolate, exception);
+  }
+  if (!exception->IsNativeError() &&
+      (message.IsEmpty() || message->GetStackTrace().IsEmpty())) {
+    // If there is no real Error object, manually create a stack trace.
+    exception = v8::Exception::Error(
+        v8::String::NewFromUtf8Literal(isolate, "Unhandled Promise."));
+    message = Exception::CreateMessage(isolate, exception);
+  }
+  Local<Context> context = isolate->GetCurrentContext();
   TryCatch try_catch(isolate);
+  Local<Object> globalInstance = context->Global();
   Local<Value> func = globalInstance->Get(context, 
     String::NewFromUtf8Literal(isolate, "onUnhandledRejection", 
       NewStringType::kNormal)).ToLocalChecked();
   if (func.IsEmpty()) {
-    return;
-  }
-  if (try_catch.HasCaught()) {
-    fprintf(stderr, "PromiseRejectCallback: Get\n");
     return;
   }
   Local<Function> onUnhandledRejection = Local<Function>::Cast(func);
@@ -160,36 +156,16 @@ void just::PromiseRejectCallback(PromiseRejectMessage message) {
     fprintf(stderr, "PromiseRejectCallback: Cast\n");
     return;
   }
-  Local<Value> argv[argc] = { promise, value, Integer::New(isolate, event) };
+  Local<Value> argv[1] = { exception };
   MaybeLocal<Value> result = onUnhandledRejection->Call(context, 
-    globalInstance, 3, argv);
+    globalInstance, 1, argv);
   if (result.IsEmpty() && try_catch.HasCaught()) {
     fprintf(stderr, "PromiseRejectCallback: Call\n");
   }
 }
 
-// called when we need to free the memory after the wrapping arraybuffer is gc'd
 void just::FreeMemory(void* buf, size_t length, void* data) {
   free(buf);
-  // todo: what do we do with *data?
-}
-
-// called when wrapping arraybuffer is gc'd and we don't want to free 
-// the underlying memory
-void just::UnwrapMemory(void* buf, size_t length, void* data) {
-
-}
-
-// called when wrapping arraybuffer is gc'd and the underlying memory is mmaped
-void just::FreeMappedMemory(void* buf, size_t length, void* data) {
-  munmap(buf, length);
-}
-
-v8::MaybeLocal<v8::Module> just::ResolveModuleCallback(Local<Context> context,
-                                         Local<String> specifier,
-                                         Local<v8::FixedArray> import_assertions,
-                                         Local<v8::Module> referrer) {
-
 }
 
 int just::CreateIsolate(int argc, char** argv, 
@@ -273,17 +249,17 @@ int just::CreateIsolate(int argc, char** argv,
       return 1;
     }
     Maybe<bool> ok = module->InstantiateModule(context, 
-      ResolveModuleCallback);
+      OnModuleInstantiate);
     if (!ok.ToChecked()) {
       just::PrintStackTrace(isolate, try_catch);
       return 1;
     }
-    MaybeLocal<Value> result = module->Evaluate(context);
-    if (result.IsEmpty()) {
-      if (try_catch.HasCaught()) {
-        just::PrintStackTrace(isolate, try_catch);
-        return 2;
-      }
+    MaybeLocal<Value> maybe_result = module->Evaluate(context);
+    Local<Value> result;
+    if (!maybe_result.ToLocal(&result)) {
+      just::PrintStackTrace(isolate, try_catch);
+      //ReportException(isolate, &try_catch);
+      return 2;
     }
     Local<Value> func = globalInstance->Get(context, 
       String::NewFromUtf8Literal(isolate, "onExit", 

@@ -246,6 +246,11 @@ function parseArgs (args) {
 function main (opts) {
   const { library, cache } = wrapLibrary()
 
+  global.onUnhandledRejection = e => {
+    just.error('onUnhandledRejection')
+    if (e) just.error(e.stack)
+  }
+
   // load the builtin modules
   just.vm = library('vm').vm
   just.loop = library('epoll').epoll
@@ -389,13 +394,7 @@ function main (opts) {
     }
     const _require = global.require
     global.require = (name, path) => {
-      if (name === 'module') {
-        return [
-          "fs",
-          "process",
-          "repl"
-        ]
-      }
+      if (name === 'module') return ['fs', 'process', 'repl']
       return _require(name, path)
     }
     global.inspector = just.inspector.createInspector({
