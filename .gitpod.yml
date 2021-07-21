@@ -1,0 +1,6 @@
+tasks:
+  - init: |
+      make clean runtime
+    command: |
+      ./just --help
+
