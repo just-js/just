@@ -76,7 +76,7 @@ Coming soon...
 - very simple layer on top of system calls, v8 and c/c++ standard libraries
 - minimal use of classes/function templates and OO - "c" in javascript
 - favour return codes over exceptions
-- platform for building system software on linux in javascaript
+- platform for building system software on linux in javascript
 - as close to native performance as possible
 - secure by default
 - avoid abstraction as much as possible. abstractions can be built in userland
