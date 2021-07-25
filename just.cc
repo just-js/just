@@ -2,6 +2,7 @@
 
 std::map<std::string, just::builtin*> just::builtins;
 std::map<std::string, just::register_plugin> just::modules;
+uint32_t scriptId = 1;
 
 ssize_t just::process_memory_usage() {
   char buf[1024];
@@ -227,40 +228,35 @@ int just::CreateIsolate(int argc, char** argv,
         js_len).ToLocalChecked()).Check();
     }
     TryCatch try_catch(isolate);
+
     ScriptOrigin baseorigin(
       String::NewFromUtf8Literal(isolate, "just.js", 
-      NewStringType::kNormal), // resource name
+      NewStringType::kInternalized), // resource name
       Integer::New(isolate, 0), // line offset
       Integer::New(isolate, 0),  // column offset
       False(isolate), // is shared cross-origin
-      Local<Integer>(),  // script id
+      Integer::New(isolate, scriptId++),  // script id
       Local<Value>(), // source map url
       False(isolate), // is opaque
       False(isolate), // is wasm
-      True(isolate)  // is module
+      False(isolate)  // is module
     );
-    Local<Module> module;
+    Local<Script> script;
     Local<String> base;
     base = String::NewFromUtf8(isolate, main_src, NewStringType::kNormal, 
       main_len).ToLocalChecked();
     ScriptCompiler::Source basescript(base, baseorigin);
-    if (!ScriptCompiler::CompileModule(isolate, &basescript).ToLocal(&module)) {
+    if (!ScriptCompiler::Compile(context, &basescript).ToLocal(&script)) {
       PrintStackTrace(isolate, try_catch);
       return 1;
     }
-    Maybe<bool> ok = module->InstantiateModule(context, 
-      OnModuleInstantiate);
-    if (!ok.ToChecked()) {
-      just::PrintStackTrace(isolate, try_catch);
-      return 1;
-    }
-    MaybeLocal<Value> maybe_result = module->Evaluate(context);
+    MaybeLocal<Value> maybe_result = script->Run(context);
     Local<Value> result;
     if (!maybe_result.ToLocal(&result)) {
       just::PrintStackTrace(isolate, try_catch);
-      //ReportException(isolate, &try_catch);
       return 2;
     }
+
     Local<Value> func = globalInstance->Get(context, 
       String::NewFromUtf8Literal(isolate, "onExit", 
         NewStringType::kNormal)).ToLocalChecked();

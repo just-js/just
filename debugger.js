@@ -13,7 +13,7 @@ const libs = [
 
 const version = just.version.just
 const v8flags = '--stack-trace-limit=10 --use-strict --disallow-code-generation-from-strings'
-const debug = true
+const debug = false
 const capabilities = [] // list of allowed internal modules, api calls etc. TBD
 
 const modules = [{

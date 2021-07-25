@@ -83,8 +83,6 @@ int CreateIsolate(int argc, char** argv,
 void PrintStackTrace(Isolate* isolate, const TryCatch& try_catch);
 void PromiseRejectCallback(PromiseRejectMessage message);
 void FreeMemory(void* buf, size_t length, void* data);
-//void UnwrapMemory(void* buf, size_t length, void* data);
-//void FreeMappedMemory(void* buf, size_t length, void* data);
 
 void SET_METHOD(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, FunctionCallback callback);
@@ -103,9 +101,26 @@ void Chdir(const FunctionCallbackInfo<Value> &args);
 void Builtin(const FunctionCallbackInfo<Value> &args);
 void MemoryUsage(const FunctionCallbackInfo<Value> &args);
 
-//v8::MaybeLocal<v8::Module> ResolveModuleCallback(Local<Context> context, Local<String> specifier, Local<v8::FixedArray> import_assertions, Local<v8::Module> referrer);
-
-
+/**
+  * Setup the target ObjectTemplate with 'just' property which holds the
+  * basic functions in the runtime core
+  * .version
+  * .version.just
+  * .version.v8
+  * .version.kernel
+  * .version.kernel.os
+  * .version.kernel.release
+  * .version.kernel.version
+  * .print()
+  * .error()
+  * .load()
+  * .pid()
+  * .sleep()
+  * .exit()
+  * .chdir()
+  * .builtin()
+  * .memoryUsage()
+**/
 void Init(Isolate* isolate, Local<ObjectTemplate> target);
 
 }
