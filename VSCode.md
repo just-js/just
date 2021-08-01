@@ -22,7 +22,7 @@ main branch may be broken at any moment in time (until we finalise a better proc
 
 ```
 cd just
-git checkout 0.1.0
+git checkout 0.1.1
 ```
 
 # Start in VSCode
