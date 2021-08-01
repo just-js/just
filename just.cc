@@ -208,7 +208,7 @@ int just::CreateIsolate(int argc, char** argv,
         NewStringType::kNormal)).ToLocalChecked();
     Local<Object> justInstance = Local<Object>::Cast(obj);
     if (buf != NULL) {
-      std::unique_ptr<BackingStore> backing = ArrayBuffer::NewBackingStore(
+      std::unique_ptr<BackingStore> backing = SharedArrayBuffer::NewBackingStore(
           buf->iov_base, buf->iov_len, [](void*, size_t, void*){}, nullptr);
       Local<SharedArrayBuffer> ab = SharedArrayBuffer::New(isolate, std::move(backing));
       justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
