@@ -115,7 +115,6 @@ void just::PrintStackTrace(Isolate* isolate, const TryCatch& try_catch) {
 
 v8::MaybeLocal<v8::Module> just::OnModuleInstantiate(Local<Context> context, 
   Local<String> specifier, Local<Module> referrer) {
-  HandleScope handle_scope(context->GetIsolate());
   return MaybeLocal<Module>();
 }
 
@@ -362,7 +361,7 @@ void just::Builtin(const FunctionCallbackInfo<Value> &args) {
     return;
   }
 
-  std::unique_ptr<BackingStore> backing = ArrayBuffer::NewBackingStore(
+  std::unique_ptr<BackingStore> backing = SharedArrayBuffer::NewBackingStore(
       (void*)b->source, b->size, [](void*, size_t, void*){}, nullptr);
   Local<SharedArrayBuffer> ab = SharedArrayBuffer::New(isolate, std::move(backing));
 
