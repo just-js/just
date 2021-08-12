@@ -81,14 +81,6 @@
     }
   }
 
-  function wrapHrtime (hrtime) {
-    const time = new BigUint64Array(1)
-    return () => {
-      hrtime(time)
-      return time[0]
-    }
-  }
-
   function wrapEnv (env) {
     return () => {
       return env()
@@ -301,7 +293,6 @@
     just.cpuUsage = wrapCpuUsage(just.sys.cpuUsage)
     just.rUsage = wrapgetrUsage(just.sys.getrUsage)
     just.heapUsage = wrapHeapUsage(just.sys.heapUsage)
-    just.hrtime = wrapHrtime(just.sys.hrtime)
 
     function startup () {
       if (!just.args.length) return true
