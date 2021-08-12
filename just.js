@@ -247,10 +247,13 @@
 
   function main (opts) {
     const { library, cache } = wrapLibrary()
+    let debugStarted = false
 
-    global.onUnhandledRejection = e => {
+    delete global.console
+
+    global.onUnhandledRejection = err => {
       just.error('onUnhandledRejection')
-      if (e) just.error(e.stack)
+      if (err) just.error(err.stack)
     }
 
     // load the builtin modules
@@ -261,7 +264,7 @@
     just.sys = library('sys').sys
     just.env = wrapEnv(just.sys.env)
 
-    const { requireNative, require } = wrapRequire(cache)
+    // todo: what about sharedarraybuffers?
     ArrayBuffer.prototype.writeString = function(str, off = 0) { // eslint-disable-line
       return just.sys.writeString(this, str, off)
     }
@@ -277,40 +280,28 @@
     ArrayBuffer.fromString = str => just.sys.calloc(1, str)
     String.byteLength = just.sys.utf8Length
 
+    const { requireNative, require } = wrapRequire(cache)
+
     Object.assign(just.fs, requireNative('fs'))
     just.config = requireNative('config')
     just.path = requireNative('path')
     just.factory = requireNative('loop').factory
-    // todo - remove this call at startup
     just.factory.loop = just.factory.create(128)
     just.process = requireNative('process')
-
     just.setTimeout = setTimeout
     just.setInterval = setInterval
     just.clearTimeout = just.clearInterval = clearTimeout
     just.SystemError = SystemError
     just.library = library
     just.requireNative = requireNative
-    just.sys.setNonBlocking = setNonBlocking
+    just.net.setNonBlocking = setNonBlocking
     just.require = global.require = require
     just.require.cache = cache
-
     just.memoryUsage = wrapMemoryUsage(just.memoryUsage)
     just.cpuUsage = wrapCpuUsage(just.sys.cpuUsage)
     just.rUsage = wrapgetrUsage(just.sys.getrUsage)
     just.heapUsage = wrapHeapUsage(just.sys.heapUsage)
     just.hrtime = wrapHrtime(just.sys.hrtime)
-
-    delete global.console
-    let debugStarted = false
-
-    function freezeIntrinsics () {
-      if (just.opts.freeze) {
-        const freeze = requireNative('freeze')
-        if (!freeze) throw new Error('freeze is not available in runtime')
-        freeze()
-      }
-    }
 
     function startup () {
       if (!just.args.length) return true
@@ -403,9 +394,7 @@
       global.inspector = just.inspector.createInspector({
         title: 'Just!',
         onReady: () => {
-          if (debugStarted) {
-            return just.factory.run()
-          }
+          if (debugStarted) return just.factory.run()
           debugStarted = true
           if (!startup()) just.factory.run()
         }
