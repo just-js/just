@@ -25,6 +25,13 @@ cd just
 git checkout 0.1.2
 ```
 
+or to checkout the current release, which should be stable and is just a tag of the current released version
+```
+cd just
+git checkout current
+```
+
+
 # Start in VSCode
 
 - open the 'just' folder in vscode
