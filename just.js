@@ -274,6 +274,7 @@
 
     const { requireNative, require } = wrapRequire(cache)
 
+    just.SystemError = SystemError
     Object.assign(just.fs, requireNative('fs'))
     just.config = requireNative('config')
     just.path = requireNative('path')
@@ -283,7 +284,6 @@
     just.setTimeout = setTimeout
     just.setInterval = setInterval
     just.clearTimeout = just.clearInterval = clearTimeout
-    just.SystemError = SystemError
     just.library = library
     just.requireNative = requireNative
     just.net.setNonBlocking = setNonBlocking
