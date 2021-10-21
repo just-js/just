@@ -92,13 +92,13 @@
   function wrapLibrary (cache = {}) {
     function loadLibrary (path, name) {
       if (cache[name]) return cache[name]
-      if (!just.sys.dlopen) return
+      if (!just.sys.dlopen) return {}
       const handle = just.sys.dlopen(path, just.sys.RTLD_LAZY)
-      if (!handle) return
+      if (!handle) return {}
       const ptr = just.sys.dlsym(handle, `_register_${name}`)
-      if (!ptr) return
+      if (!ptr) return {}
       const lib = just.load(ptr)
-      if (!lib) return
+      if (!lib) return {}
       lib.close = () => just.sys.dlclose(handle)
       lib.type = 'module-external'
       cache[name] = lib

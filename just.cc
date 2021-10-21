@@ -369,10 +369,6 @@ void just::Builtin(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(ab);
 }
 
-void just::Sleep(const FunctionCallbackInfo<Value> &args) {
-  sleep(Local<Integer>::Cast(args[0])->Value());
-}
-
 void just::MemoryUsage(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   ssize_t rss = just::process_memory_usage();
@@ -406,6 +402,10 @@ void just::MemoryUsage(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(array);
 }
 
+void just::Sleep(const FunctionCallbackInfo<Value> &args) {
+  sleep(Local<Integer>::Cast(args[0])->Value());
+}
+
 void just::Exit(const FunctionCallbackInfo<Value>& args) {
   exit(Local<Integer>::Cast(args[0])->Value());
 }
@@ -418,6 +418,30 @@ void just::Chdir(const FunctionCallbackInfo<Value> &args) {
   Isolate *isolate = args.GetIsolate();
   String::Utf8Value path(isolate, args[0]);
   args.GetReturnValue().Set(Integer::New(isolate, chdir(*path)));
+}
+
+void just::Builtins(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  Local<Context> context = isolate->GetCurrentContext();
+  Local<Array> b = Array::New(isolate);
+  int i = 0;
+  for (auto const& [key, val] : builtins) {
+    b->Set(context, i++, String::NewFromUtf8(isolate, key.c_str(), 
+      NewStringType::kNormal, key.length()).ToLocalChecked()).Check();
+  }
+  args.GetReturnValue().Set(b);
+}
+
+void just::Modules(const FunctionCallbackInfo<Value> &args) {
+  Isolate *isolate = args.GetIsolate();
+  Local<Context> context = isolate->GetCurrentContext();
+  Local<Array> m = Array::New(isolate);
+  int i = 0;
+  for (auto const& [key, val] : modules) {
+    m->Set(context, i++, String::NewFromUtf8(isolate, key.c_str(), 
+      NewStringType::kNormal, key.length()).ToLocalChecked()).Check();
+  }
+  args.GetReturnValue().Set(m);
 }
 
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
@@ -444,12 +468,19 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
     NewStringType::kNormal), kernel);
   SET_METHOD(isolate, target, "print", Print);
   SET_METHOD(isolate, target, "error", Error);
-  SET_METHOD(isolate, target, "load", Load);
+ 
+  // TODO: move these four to sys library
   SET_METHOD(isolate, target, "exit", Exit);
   SET_METHOD(isolate, target, "pid", PID);
   SET_METHOD(isolate, target, "chdir", Chdir);
   SET_METHOD(isolate, target, "sleep", Sleep);
-  SET_METHOD(isolate, target, "builtin", Builtin);
-  SET_METHOD(isolate, target, "memoryUsage", MemoryUsage);
+
   SET_MODULE(isolate, target, "version", version);
+  // TODO: move this to vm library
+  SET_METHOD(isolate, target, "memoryUsage", MemoryUsage);
+
+  SET_METHOD(isolate, target, "load", Load);
+  SET_METHOD(isolate, target, "builtin", Builtin);
+  SET_METHOD(isolate, target, "builtins", Builtins);
+  SET_METHOD(isolate, target, "modules", Modules);
 }

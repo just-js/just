@@ -100,6 +100,8 @@ void Exit(const FunctionCallbackInfo<Value> &args);
 void Chdir(const FunctionCallbackInfo<Value> &args);
 void Builtin(const FunctionCallbackInfo<Value> &args);
 void MemoryUsage(const FunctionCallbackInfo<Value> &args);
+void Builtins(const FunctionCallbackInfo<Value> &args);
+void Modules(const FunctionCallbackInfo<Value> &args);
 
 /**
   * Setup the target ObjectTemplate with 'just' property which holds the
