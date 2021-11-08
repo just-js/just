@@ -45,6 +45,13 @@ err:
   return 0;
 }
 
+uint64_t just::hrtime() {
+  struct timespec t;
+  clock_t clock_id = CLOCK_MONOTONIC;
+  if (clock_gettime(clock_id, &t)) return 0;
+  return t.tv_sec * (uint64_t) 1e9 + t.tv_nsec;
+}
+
 void just::builtins_add (const char* name, const char* source, 
   unsigned int size) {
   struct builtin* b = new builtin();
@@ -170,7 +177,8 @@ void just::FreeMemory(void* buf, size_t length, void* data) {
 
 int just::CreateIsolate(int argc, char** argv, 
   const char* main_src, unsigned int main_len, 
-  const char* js, unsigned int js_len, struct iovec* buf, int fd) {
+  const char* js, unsigned int js_len, struct iovec* buf, int fd,
+  uint64_t start) {
   Isolate::CreateParams create_params;
   int statusCode = 0;
   create_params.array_buffer_allocator = 
@@ -212,6 +220,11 @@ int just::CreateIsolate(int argc, char** argv,
       Local<SharedArrayBuffer> ab = SharedArrayBuffer::New(isolate, std::move(backing));
       justInstance->Set(context, String::NewFromUtf8Literal(isolate, 
         "buffer", NewStringType::kNormal), ab).Check();
+    }
+    if (start > 0) {
+      justInstance->Set(context, String::NewFromUtf8Literal(isolate, "start", 
+        NewStringType::kNormal), 
+        BigInt::New(isolate, start)).Check();
     }
     if (fd != 0) {
       justInstance->Set(context, String::NewFromUtf8Literal(isolate, "fd", 
@@ -287,8 +300,8 @@ int just::CreateIsolate(int argc, char** argv,
 }
 
 int just::CreateIsolate(int argc, char** argv, const char* main_src, 
-  unsigned int main_len) {
-  return CreateIsolate(argc, argv, main_src, main_len, NULL, 0, NULL, 0);
+  unsigned int main_len, uint64_t start) {
+  return CreateIsolate(argc, argv, main_src, main_len, NULL, 0, NULL, 0, start);
 }
 
 void just::Print(const FunctionCallbackInfo<Value> &args) {

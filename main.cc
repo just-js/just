@@ -2,6 +2,7 @@
 #include "main.h"
 
 int main(int argc, char** argv) {
+  uint64_t start = just::hrtime();
   setvbuf(stdout, nullptr, _IONBF, 0);
   setvbuf(stderr, nullptr, _IONBF, 0);
   std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
@@ -15,9 +16,9 @@ int main(int argc, char** argv) {
   if (_use_index) {
     just::CreateIsolate(argc, argv, just_js, just_js_len, 
       index_js, index_js_len, 
-      NULL, 0);
+      NULL, 0, start);
   } else {
-    just::CreateIsolate(argc, argv, just_js, just_js_len);
+    just::CreateIsolate(argc, argv, just_js, just_js_len, start);
   }
   v8::V8::Dispose();
   v8::V8::ShutdownPlatform();

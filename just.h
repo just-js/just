@@ -60,6 +60,7 @@ using v8::BigUint64Array;
 
 ssize_t process_memory_usage();
 
+uint64_t hrtime();
 typedef void *(*register_plugin)();
 struct builtin {
   unsigned int size;
@@ -77,9 +78,10 @@ MaybeLocal<Module> OnModuleInstantiate(Local<Context> context,
 
 int CreateIsolate(int argc, char** argv, 
   const char* main, unsigned int main_len,
-  const char* js, unsigned int js_len, struct iovec* buf, int fd);
+  const char* js, unsigned int js_len, struct iovec* buf, int fd,
+  uint64_t start);
 int CreateIsolate(int argc, char** argv,
-  const char* main, unsigned int main_len);
+  const char* main, unsigned int main_len, uint64_t start);
 void PrintStackTrace(Isolate* isolate, const TryCatch& try_catch);
 void PromiseRejectCallback(PromiseRejectMessage message);
 void FreeMemory(void* buf, size_t length, void* data);
