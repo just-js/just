@@ -457,6 +457,10 @@ void just::Modules(const FunctionCallbackInfo<Value> &args) {
   args.GetReturnValue().Set(m);
 }
 
+void just::HRTime(const FunctionCallbackInfo<Value> &args) {
+  args.GetReturnValue().Set(BigInt::New(args.GetIsolate(), just::hrtime()));
+}
+
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   Local<ObjectTemplate> version = ObjectTemplate::New(isolate);
   SET_VALUE(isolate, version, "just", String::NewFromUtf8Literal(isolate, 
@@ -487,6 +491,7 @@ void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
   SET_METHOD(isolate, target, "pid", PID);
   SET_METHOD(isolate, target, "chdir", Chdir);
   SET_METHOD(isolate, target, "sleep", Sleep);
+  SET_METHOD(isolate, target, "hrtime", HRTime);
 
   SET_MODULE(isolate, target, "version", version);
   // TODO: move this to vm library

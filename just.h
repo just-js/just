@@ -100,6 +100,7 @@ void Sleep(const FunctionCallbackInfo<Value> &args);
 void PID(const FunctionCallbackInfo<Value> &args);
 void Exit(const FunctionCallbackInfo<Value> &args);
 void Chdir(const FunctionCallbackInfo<Value> &args);
+void HRTime(const FunctionCallbackInfo<Value> &args);
 void Builtin(const FunctionCallbackInfo<Value> &args);
 void MemoryUsage(const FunctionCallbackInfo<Value> &args);
 void Builtins(const FunctionCallbackInfo<Value> &args);
