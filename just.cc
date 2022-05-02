@@ -241,17 +241,22 @@ int just::CreateIsolate(int argc, char** argv,
     }
     TryCatch try_catch(isolate);
 
+    Local<v8::PrimitiveArray> opts =
+        v8::PrimitiveArray::New(isolate, 1);
+    opts->Set(isolate, 0, v8::Number::New(isolate, 1));
     ScriptOrigin baseorigin(
+      isolate,
       String::NewFromUtf8Literal(isolate, "just.js", 
       NewStringType::kInternalized), // resource name
-      Integer::New(isolate, 0), // line offset
-      Integer::New(isolate, 0),  // column offset
-      False(isolate), // is shared cross-origin
-      Integer::New(isolate, scriptId++),  // script id
+      0, // line offset
+      0,  // column offset
+      false, // is shared cross-origin
+      scriptId++,  // script id
       Local<Value>(), // source map url
-      False(isolate), // is opaque
-      False(isolate), // is wasm
-      False(isolate)  // is module
+      false, // is opaque
+      false, // is wasm
+      false,  // is module
+      opts
     );
     Local<Script> script;
     Local<String> base;
