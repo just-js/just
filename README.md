@@ -83,7 +83,9 @@ just build hello.js --clean --static
 ```
 If the program compiled successfully, you will be able to goto the route endpoints we added and see the "Hello World" message.
 So, open a browser and open
+
 http://localhost:8080/json
+
 http://localhost:8080/plaintext
 
 
