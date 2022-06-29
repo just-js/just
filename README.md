@@ -1,5 +1,4 @@
-# Just [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/just-js/just) [![Discord](https://img.shields.io/discord/984405642091585536?label=Discord&logo=Discord)](https://discord.gg/aFpU6VzQK)
-
+# Just [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/just-js/just) 
 A very small v8 javascript runtime for linux only
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/just-js/binder/HEAD)
