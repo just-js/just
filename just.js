@@ -298,9 +298,9 @@
       if (!just.args.length) return true
       if (just.workerSource) {
         const scriptName = just.path.join(just.sys.cwd(), just.args[0] || 'thread')
-        const source = just.workerSource
+        just.main = just.workerSource
         delete just.workerSource
-        just.vm.runScript(source, scriptName)
+        just.vm.runScript(just.main, scriptName)
         return
       }
       if (just.args.length === 1) {
@@ -361,7 +361,8 @@
         return
       }
       const scriptName = just.path.join(just.sys.cwd(), just.args[1])
-      just.vm.runScript(just.fs.readFile(just.args[1]), scriptName)
+      just.main = just.fs.readFile(just.args[1])
+      just.vm.runScript(just.main, scriptName)
     }
     if (opts.inspector) {
       const inspectorLib = just.library('inspector')

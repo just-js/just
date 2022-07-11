@@ -9,6 +9,8 @@ EMBEDS=just.cc just.h Makefile main.cc lib/websocket.js lib/inspector.js just.js
 FLAGS=${CFLAGS}
 LFLAG=${LFLAGS}
 JUST_HOME=$(shell pwd)
+NPROCS = $(shell grep -c 'processor' /proc/cpuinfo)
+MAKEFLAGS += -j$(NPROCS)
 
 .PHONY: help clean
 
@@ -57,10 +59,10 @@ v8src: ## download the full v8 source for this release
 	rm -f v8src-$(RELEASE).tar.gz
 
 module: ## build a shared library for a module 
-	CFLAGS="$(FLAGS)" LFLAGS="${LFLAG}" JUST_HOME="$(JUST_HOME)" make -C modules/${MODULE}/ library
+	CFLAGS="$(FLAGS)" LFLAGS="${LFLAG}" JUST_HOME="$(JUST_HOME)" $(MAKE) -C modules/${MODULE}/ library
 
 module-static: ## build a shared library for a module 
-	CFLAGS="$(FLAGS)" LFLAGS="${LFLAG}" JUST_HOME="$(JUST_HOME)" make -C modules/${MODULE}/ FLAGS=-DSTATIC library
+	CFLAGS="$(FLAGS)" LFLAGS="${LFLAG}" JUST_HOME="$(JUST_HOME)" $(MAKE) -C modules/${MODULE}/ FLAGS=-DSTATIC library
 
 builtins.o: just.cc just.h Makefile main.cc ## compile builtins with build dependencies
 	gcc builtins.S -c -o builtins.o
@@ -73,38 +75,60 @@ main: modules builtins.o deps/v8/libv8_monolith.a
 	$(CC) -c ${FLAGS} -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -g -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
   ifeq (${TARGET}, just)
 	$(CC) -g -rdynamic -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group ${LFLAG} ${LIB} -o ${TARGET} -Wl,-rpath=/usr/local/lib/${TARGET}
-	objcopy --only-keep-debug ${TARGET} ${TARGET}.debug
-	strip --strip-debug --strip-unneeded ${TARGET}
   else
 	$(CC) -g -rdynamic -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group ${LFLAG} ${LIB} -o ${TARGET}
   endif
-
-main-static: modules builtins.o deps/v8/libv8_monolith.a
-	$(CC) -c -fno-exceptions -ffunction-sections -fdata-sections ${FLAGS} -DJUST_VERSION='"${RELEASE}"' -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
-	$(CC) -c -fno-exceptions -ffunction-sections -fdata-sections ${FLAGS} -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
-  ifeq (${TARGET}, just)
-	$(CC) -s -static -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group -Wl,--gc-sections ${LFLAG} ${LIB} -o ${TARGET} -Wl,-rpath=/usr/local/lib/${TARGET}
 	objcopy --only-keep-debug ${TARGET} ${TARGET}.debug
 	strip --strip-debug --strip-unneeded ${TARGET}
+	objcopy --add-gnu-debuglink=${TARGET}.debug ${TARGET}
+
+main-static: modules builtins.o deps/v8/libv8_monolith.a
+	$(CC) -c ${FLAGS} -DJUST_VERSION='"${RELEASE}"' -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter just.cc
+	$(CC) -c ${FLAGS} -std=c++17 -DV8_COMPRESS_POINTERS -I. -I./deps/v8/include -O3 -march=native -mtune=native -Wpedantic -Wall -Wextra -flto -Wno-unused-parameter main.cc
+  ifeq (${TARGET}, just)
+	$(CC) -g -static -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group ${LFLAG} ${LIB} -o ${TARGET} -Wl,-rpath=/usr/local/lib/${TARGET}
   else
-	$(CC) -s -static -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group -Wl,--gc-sections ${LFLAG} ${LIB} -o ${TARGET}
+	$(CC) -g -static -flto -pthread -m64 -Wl,--start-group deps/v8/libv8_monolith.a main.o just.o builtins.o ${MODULES} -Wl,--end-group ${LFLAG} ${LIB} -o ${TARGET}
   endif
+	objcopy --only-keep-debug ${TARGET} ${TARGET}.debug
+	strip --strip-debug --strip-unneeded ${TARGET}
+	objcopy --add-gnu-debuglink=${TARGET}.debug ${TARGET}
 
-runtime: modules deps/v8/libv8_monolith.a ## build dynamic runtime
-	make MODULE=net module
-	make MODULE=sys module
-	make MODULE=epoll module
-	make MODULE=vm module
-	make MODULE=fs module
-	make main
+module-net:
+	$(MAKE) MODULE=net module
 
-runtime-static: modules deps/v8/libv8_monolith.a ## build static runtime
-	make MODULE=net module-static
-	make MODULE=sys module-static
-	make MODULE=epoll module-static
-	make MODULE=vm module-static
-	make MODULE=fs module-static
-	make main-static
+module-sys:
+	$(MAKE) MODULE=sys module
+
+module-epoll:
+	$(MAKE) MODULE=epoll module
+
+module-vm:
+	$(MAKE) MODULE=vm module
+
+module-fs:
+	$(MAKE) MODULE=fs module
+
+module-static-net:
+	$(MAKE) MODULE=net module-static
+
+module-static-sys:
+	$(MAKE) MODULE=sys module-static
+
+module-static-epoll:
+	$(MAKE) MODULE=epoll module-static
+
+module-static-vm:
+	$(MAKE) MODULE=vm module-static
+
+module-static-fs:
+	$(MAKE) MODULE=fs module-static
+
+runtime: module-vm module-net module-sys module-epoll module-fs
+	$(MAKE) main
+
+runtime-static: modules module-static-vm module-static-net module-static-sys module-static-epoll module-static-fs
+	$(MAKE) main-static
 
 clean: ## tidy up
 	rm -f *.o
@@ -116,7 +140,7 @@ cleanall: ## remove just and build deps
 	rm -fr modules
 	rm -fr libs
 	rm -fr examples
-	make clean
+	$(MAKE) clean
 
 install: ## install
 	mkdir -p ${INSTALL}
@@ -125,7 +149,6 @@ install: ## install
 install-debug: ## install debug symbols
 	mkdir -p ${INSTALL}/.debug
 	cp -f ${TARGET}.debug ${INSTALL}/.debug/${TARGET}.debug
-	objcopy --add-gnu-debuglink=${INSTALL}/${TARGET} ${INSTALL}/.debug/${TARGET}.debug
 
 uninstall: ## uninstall
 	rm -f ${INSTALL}/${TARGET}

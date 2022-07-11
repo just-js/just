@@ -443,9 +443,9 @@ void just::Builtins(const FunctionCallbackInfo<Value> &args) {
   Local<Context> context = isolate->GetCurrentContext();
   Local<Array> b = Array::New(isolate);
   int i = 0;
-  for (auto const& [key, val] : builtins) {
-    b->Set(context, i++, String::NewFromUtf8(isolate, key.c_str(), 
-      NewStringType::kNormal, key.length()).ToLocalChecked()).Check();
+  for (auto const& builtin : builtins) {
+    b->Set(context, i++, String::NewFromUtf8(isolate, builtin.first.c_str(), 
+      NewStringType::kNormal, builtin.first.length()).ToLocalChecked()).Check();
   }
   args.GetReturnValue().Set(b);
 }
@@ -455,9 +455,9 @@ void just::Modules(const FunctionCallbackInfo<Value> &args) {
   Local<Context> context = isolate->GetCurrentContext();
   Local<Array> m = Array::New(isolate);
   int i = 0;
-  for (auto const& [key, val] : modules) {
-    m->Set(context, i++, String::NewFromUtf8(isolate, key.c_str(), 
-      NewStringType::kNormal, key.length()).ToLocalChecked()).Check();
+  for (auto const& module : modules) {
+    m->Set(context, i++, String::NewFromUtf8(isolate, module.first.c_str(), 
+      NewStringType::kNormal, module.first.length()).ToLocalChecked()).Check();
   }
   args.GetReturnValue().Set(m);
 }
