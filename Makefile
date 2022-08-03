@@ -122,10 +122,10 @@ module-static-vm:
 module-static-fs:
 	$(MAKE) MODULE=fs module-static
 
-runtime: modules module-vm module-net module-sys module-epoll module-fs
+runtime: deps/v8/libv8_monolith.a modules module-vm module-net module-sys module-epoll module-fs
 	$(MAKE) main
 
-runtime-static: modules module-static-vm module-static-net module-static-sys module-static-epoll module-static-fs
+runtime-static: deps/v8/libv8_monolith.a modules module-static-vm module-static-net module-static-sys module-static-epoll module-static-fs
 	$(MAKE) main-static
 
 clean: ## tidy up
