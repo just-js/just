@@ -83,15 +83,14 @@ void just::SET_VALUE(Isolate *isolate, Local<ObjectTemplate>
 
 void just::PrintStackTrace(Isolate* isolate, const TryCatch& try_catch) {
   HandleScope handleScope(isolate);
-  Local<Value> exception = try_catch.Exception();
   Local<Message> message = try_catch.Message();
   Local<StackTrace> stack = message->GetStackTrace();
-  String::Utf8Value ex(isolate, exception);
   Local<Value> scriptName = message->GetScriptResourceName();
   String::Utf8Value scriptname(isolate, scriptName);
   Local<Context> context = isolate->GetCurrentContext();
   int linenum = message->GetLineNumber(context).FromJust();
-  fprintf(stderr, "%s in %s on line %i\n", *ex, *scriptname, linenum);
+  v8::String::Utf8Value err_message(isolate, message->Get().As<String>());
+  fprintf(stderr, "%s in %s on line %i\n", *err_message, *scriptname, linenum);
   if (stack.IsEmpty()) return;
   for (int i = 0; i < stack->GetFrameCount(); i++) {
     Local<StackFrame> stack_frame = stack->GetFrame(isolate, i);
@@ -197,8 +196,6 @@ int just::CreateIsolate(int argc, char** argv,
       NewStringType::kNormal), just);
     Local<Context> context = Context::New(isolate, NULL, global);
     Context::Scope context_scope(context);
-    // TODO: make this a config option
-    context->AllowCodeGenerationFromStrings(false);
     isolate->SetPromiseRejectCallback(PromiseRejectCallback);
     Local<Array> arguments = Array::New(isolate);
     for (int i = 0; i < argc; i++) {
