@@ -122,7 +122,7 @@ module-static-vm:
 module-static-fs:
 	$(MAKE) MODULE=fs module-static
 
-runtime: module-vm module-net module-sys module-epoll module-fs
+runtime: modules module-vm module-net module-sys module-epoll module-fs
 	$(MAKE) main
 
 runtime-static: modules module-static-vm module-static-net module-static-sys module-static-epoll module-static-fs
