@@ -9,8 +9,6 @@ EMBEDS=just.cc just.h Makefile main.cc lib/websocket.js lib/inspector.js just.js
 FLAGS=${CFLAGS}
 LFLAG=${LFLAGS}
 JUST_HOME=$(shell pwd)
-NPROCS = $(shell grep -c 'processor' /proc/cpuinfo)
-MAKEFLAGS += -j$(NPROCS)
 
 .PHONY: help clean
 
