@@ -362,7 +362,11 @@
       }
       const scriptName = just.path.join(just.sys.cwd(), just.args[1])
       just.main = just.fs.readFile(just.args[1])
-      just.vm.runScript(just.main, scriptName)
+      if (opts.esm) {
+        just.vm.runModule(just.main, scriptName)
+      } else {
+        just.vm.runScript(just.main, scriptName)
+      }
     }
     if (opts.inspector) {
       const inspectorLib = just.library('inspector')

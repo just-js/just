@@ -57,6 +57,19 @@ using v8::Promise;
 using v8::PromiseRejectEvent;
 using v8::Uint32Array;
 using v8::BigUint64Array;
+using v8::FixedArray;
+
+enum ScriptType : int {
+  kScript,
+  kModule,
+  kFunction,
+};
+
+enum HostDefinedOptions : int {
+  kType = 8,
+  kID = 9,
+  kLength = 10,
+};
 
 ssize_t process_memory_usage();
 
@@ -73,8 +86,9 @@ void builtins_add (const char* name, const char* source,
 
 using InitializerCallback = void (*)(Isolate* isolate, 
   Local<ObjectTemplate> exports);
-MaybeLocal<Module> OnModuleInstantiate(Local<Context> context, 
-  Local<String> specifier, Local<Module> referrer);
+v8::MaybeLocal<v8::Module> OnModuleInstantiate(v8::Local<v8::Context> context,
+  v8::Local<v8::String> specifier, v8::Local<v8::FixedArray> import_assertions, 
+  v8::Local<v8::Module> referrer);
 
 int CreateIsolate(int argc, char** argv, 
   const char* main, unsigned int main_len,

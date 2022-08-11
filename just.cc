@@ -119,11 +119,6 @@ void just::PrintStackTrace(Isolate* isolate, const TryCatch& try_catch) {
   fflush(stderr);
 }
 
-v8::MaybeLocal<v8::Module> just::OnModuleInstantiate(Local<Context> context, 
-  Local<String> specifier, Local<Module> referrer) {
-  return MaybeLocal<Module>();
-}
-
 void just::PromiseRejectCallback(PromiseRejectMessage data) {
   if (data.GetEvent() == v8::kPromiseRejectAfterResolved ||
       data.GetEvent() == v8::kPromiseResolveAfterResolved) {
@@ -174,6 +169,103 @@ void just::FreeMemory(void* buf, size_t length, void* data) {
   free(buf);
 }
 
+char* readFile(char filename[]) {
+  std::ifstream file;
+  file.open(filename, std::ifstream::ate);
+  char* contents;
+  if (!file) {
+    contents = new char[1];
+    return contents;
+  }
+  size_t file_size = file.tellg();
+  file.seekg(0);
+  std::filebuf* file_buf = file.rdbuf();
+  contents = new char[file_size + 1]();
+  file_buf->sgetn(contents, file_size);
+  file.close();
+  return contents;
+}
+
+v8::MaybeLocal<v8::Module> loadModule(char code[],
+                                      char name[],
+                                      v8::Local<v8::Context> cx) {
+  v8::Local<v8::String> vcode =
+      v8::String::NewFromUtf8(cx->GetIsolate(), code).ToLocalChecked();
+  v8::Local<v8::PrimitiveArray> opts =
+      v8::PrimitiveArray::New(cx->GetIsolate(), just::HostDefinedOptions::kLength);
+  opts->Set(cx->GetIsolate(), just::HostDefinedOptions::kType,
+                            v8::Number::New(cx->GetIsolate(), just::ScriptType::kModule));
+  v8::ScriptOrigin origin(cx->GetIsolate(), v8::String::NewFromUtf8(cx->GetIsolate(), name).ToLocalChecked(), // resource name
+    0, // line offset
+    0,  // column offset
+    true, // is shared cross-origin
+    -1,  // script id
+    v8::Local<v8::Value>(), // source map url
+    false, // is opaque
+    false, // is wasm
+    true, // is module
+    opts);
+  v8::Context::Scope context_scope(cx);
+  v8::ScriptCompiler::Source source(vcode, origin);
+  v8::MaybeLocal<v8::Module> mod;
+  mod = v8::ScriptCompiler::CompileModule(cx->GetIsolate(), &source);
+  return mod;
+}
+
+// lifted from here: https://gist.github.com/surusek/4c05e4dcac6b82d18a1a28e6742fc23e
+v8::MaybeLocal<v8::Module> just::OnModuleInstantiate(v8::Local<v8::Context> context,
+                                       v8::Local<v8::String> specifier,
+                                       v8::Local<v8::FixedArray> import_assertions, 
+                                       v8::Local<v8::Module> referrer) {
+  v8::String::Utf8Value str(context->GetIsolate(), specifier);
+  return loadModule(readFile(*str), *str, context);
+}
+
+v8::Local<v8::Module> checkModule(v8::MaybeLocal<v8::Module> maybeModule,
+                                  v8::Local<v8::Context> cx) {
+  v8::Local<v8::Module> mod;
+  if (!maybeModule.ToLocal(&mod)) {
+    printf("Error loading module!\n");
+    exit(EXIT_FAILURE);
+  }
+  v8::Maybe<bool> result = mod->InstantiateModule(cx, just::OnModuleInstantiate);
+  if (result.IsNothing()) {
+    printf("\nCan't instantiate module.\n");
+    exit(EXIT_FAILURE);
+  }
+  return mod;
+}
+
+v8::Local<v8::Value> execModule(v8::Local<v8::Module> mod,
+                                v8::Local<v8::Context> cx,
+                                bool nsObject) {
+  v8::Local<v8::Value> retValue;
+  if (!mod->Evaluate(cx).ToLocal(&retValue)) {
+    printf("Error evaluating module!\n");
+    exit(EXIT_FAILURE);
+  }
+  if (nsObject)
+    return mod->GetModuleNamespace();
+  else
+    return retValue;
+}
+
+v8::MaybeLocal<v8::Promise> OnDynamicImport(v8::Local<v8::Context> context,
+                                        v8::Local<v8::ScriptOrModule> referrer,
+                                        v8::Local<v8::String> specifier,
+                                        v8::Local<v8::FixedArray> import_assertions) {
+fprintf(stderr, "OnDynamicImport\n");
+  v8::Local<v8::Promise::Resolver> resolver =
+      v8::Promise::Resolver::New(context).ToLocalChecked();
+  v8::MaybeLocal<v8::Promise> promise(resolver->GetPromise());
+  v8::String::Utf8Value name(context->GetIsolate(), specifier);
+  v8::Local<v8::Module> mod =
+      checkModule(loadModule(readFile(*name), *name, context), context);
+  v8::Local<v8::Value> retValue = execModule(mod, context, true);
+  resolver->Resolve(context, retValue).ToChecked();
+  return promise;
+}
+
 int just::CreateIsolate(int argc, char** argv, 
   const char* main_src, unsigned int main_len, 
   const char* js, unsigned int js_len, struct iovec* buf, int fd,
@@ -197,6 +289,7 @@ int just::CreateIsolate(int argc, char** argv,
     Local<Context> context = Context::New(isolate, NULL, global);
     Context::Scope context_scope(context);
     isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+    isolate->SetHostImportModuleDynamicallyCallback(OnDynamicImport);
     Local<Array> arguments = Array::New(isolate);
     for (int i = 0; i < argc; i++) {
       arguments->Set(context, i, String::NewFromUtf8(isolate, argv[i], 
@@ -239,8 +332,9 @@ int just::CreateIsolate(int argc, char** argv,
     TryCatch try_catch(isolate);
 
     Local<v8::PrimitiveArray> opts =
-        v8::PrimitiveArray::New(isolate, 1);
-    opts->Set(isolate, 0, v8::Number::New(isolate, 1));
+        v8::PrimitiveArray::New(isolate, just::HostDefinedOptions::kLength);
+    opts->Set(isolate, just::HostDefinedOptions::kType, 
+      v8::Number::New(isolate, just::ScriptType::kModule));
     ScriptOrigin baseorigin(
       isolate,
       String::NewFromUtf8Literal(isolate, "just.js", 
@@ -252,25 +346,30 @@ int just::CreateIsolate(int argc, char** argv,
       Local<Value>(), // source map url
       false, // is opaque
       false, // is wasm
-      false,  // is module
+      true,  // is module
       opts
     );
-    Local<Script> script;
     Local<String> base;
     base = String::NewFromUtf8(isolate, main_src, NewStringType::kNormal, 
       main_len).ToLocalChecked();
     ScriptCompiler::Source basescript(base, baseorigin);
-    if (!ScriptCompiler::Compile(context, &basescript).ToLocal(&script)) {
+    Local<Module> module;
+    if (!ScriptCompiler::CompileModule(isolate, &basescript).ToLocal(&module)) {
       PrintStackTrace(isolate, try_catch);
       return 1;
     }
-    MaybeLocal<Value> maybe_result = script->Run(context);
-    Local<Value> result;
-    if (!maybe_result.ToLocal(&result)) {
-      just::PrintStackTrace(isolate, try_catch);
-      return 2;
+    Maybe<bool> ok2 = module->InstantiateModule(context, just::OnModuleInstantiate);
+    if (ok2.IsNothing()) {
+      if (try_catch.HasCaught() && !try_catch.HasTerminated()) {
+        try_catch.ReThrow();
+      }
+      return 1;
     }
-
+    module->Evaluate(context).ToLocalChecked();
+    if (try_catch.HasCaught() && !try_catch.HasTerminated()) {
+      try_catch.ReThrow();
+      return 1;
+    }
     Local<Value> func = globalInstance->Get(context, 
       String::NewFromUtf8Literal(isolate, "onExit", 
         NewStringType::kNormal)).ToLocalChecked();
