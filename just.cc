@@ -63,21 +63,21 @@ void just::builtins_add (const char* name, const char* source,
 void just::SET_METHOD(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, FunctionCallback callback) {
   recv->Set(String::NewFromUtf8(isolate, name, 
-    NewStringType::kNormal).ToLocalChecked(), 
+    NewStringType::kInternalized).ToLocalChecked(), 
     FunctionTemplate::New(isolate, callback));
 }
 
 void just::SET_MODULE(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, Local<ObjectTemplate> module) {
   recv->Set(String::NewFromUtf8(isolate, name, 
-    NewStringType::kNormal).ToLocalChecked(), 
+    NewStringType::kInternalized).ToLocalChecked(), 
     module);
 }
 
 void just::SET_VALUE(Isolate *isolate, Local<ObjectTemplate> 
   recv, const char *name, Local<Value> value) {
   recv->Set(String::NewFromUtf8(isolate, name, 
-    NewStringType::kNormal).ToLocalChecked(), 
+    NewStringType::kInternalized).ToLocalChecked(), 
     value);
 }
 
@@ -254,7 +254,6 @@ v8::MaybeLocal<v8::Promise> OnDynamicImport(v8::Local<v8::Context> context,
                                         v8::Local<v8::ScriptOrModule> referrer,
                                         v8::Local<v8::String> specifier,
                                         v8::Local<v8::FixedArray> import_assertions) {
-fprintf(stderr, "OnDynamicImport\n");
   v8::Local<v8::Promise::Resolver> resolver =
       v8::Promise::Resolver::New(context).ToLocalChecked();
   v8::MaybeLocal<v8::Promise> promise(resolver->GetPromise());
@@ -559,7 +558,8 @@ void just::Modules(const FunctionCallbackInfo<Value> &args) {
 }
 
 void just::HRTime(const FunctionCallbackInfo<Value> &args) {
-  args.GetReturnValue().Set(BigInt::New(args.GetIsolate(), just::hrtime()));
+  uint64_t* ptr = reinterpret_cast<uint64_t*>(Local<BigInt>::Cast(args[0])->Uint64Value());
+  *ptr = just::hrtime();
 }
 
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
