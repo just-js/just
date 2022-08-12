@@ -1,6 +1,4 @@
 #!/bin/sh
-JUST_VERSION=0.1.11
-curl -L -o just.tar.gz https://github.com/just-js/just/archive/${JUST_VERSION}.tar.gz
-tar -zxvf just.tar.gz
-mv just-${JUST_VERSION} just
+curl -L -o just.tar.gz https://github.com/just-js/just/archive/current.tar.gz
+mkdir -p just && tar -zxvf just.tar.gz -C just --strip-components 1
 make -C just runtime-static
