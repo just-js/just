@@ -3,6 +3,7 @@
 std::map<std::string, just::builtin*> just::builtins;
 std::map<std::string, just::register_plugin> just::modules;
 uint32_t scriptId = 1;
+just::handle* handles[1024];
 
 ssize_t just::process_memory_usage() {
   char buf[1024];
@@ -558,8 +559,22 @@ void just::Modules(const FunctionCallbackInfo<Value> &args) {
 }
 
 void just::HRTime(const FunctionCallbackInfo<Value> &args) {
-  uint64_t* ptr = reinterpret_cast<uint64_t*>(Local<BigInt>::Cast(args[0])->Uint64Value());
+  int index = Local<Integer>::Cast(args[0])->Value();
+  // todo: check out of bounds etc.
+  just::handle* h = handles[index];
+  if (h) {
+    uint64_t* ptr = (uint64_t*)h->ptr;    
+    *ptr = just::hrtime();
+    return;
+  }
+  h = (just::handle*)calloc(1, sizeof(just::handle));
+  Local<ArrayBuffer> ab = args[1].As<ArrayBuffer>();
+  std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
+  h->ptr = static_cast<char *>(backing->Data());
+  uint64_t* ptr = (uint64_t*)h->ptr;
   *ptr = just::hrtime();
+  h->ptr = ptr;
+  handles[index] = h;
 }
 
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {

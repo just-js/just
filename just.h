@@ -80,6 +80,9 @@ struct builtin {
   unsigned int size;
   const char* source;
 };
+struct handle {
+  void* ptr;
+};
 extern std::map<std::string, builtin*> builtins;
 extern std::map<std::string, register_plugin> modules;
 void builtins_add (const char* name, const char* source, 

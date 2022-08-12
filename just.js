@@ -1,11 +1,13 @@
 (function () {
+  let handles = 0
+
   function wrapHRTime (hrtime) {
     const buf = new ArrayBuffer(8)
-    const u64 = new BigUint64Array(buf)
-    const address = buf.getAddress()
+    const handle = handles++
+    hrtime(handle, buf)
     return () => {
-      hrtime(address)
-      return u64[0]
+      hrtime(handle)
+      return buf
     }
   }
 
@@ -299,6 +301,7 @@
     just.net.setNonBlocking = setNonBlocking
     just.require = global.require = require
     just.require.cache = cache
+    just._hrtime = just.hrtime
     just.hrtime = wrapHRTime(just.hrtime)
     just.memoryUsage = wrapMemoryUsage(just.memoryUsage)
     just.cpuUsage = wrapCpuUsage(just.sys.cpuUsage)
