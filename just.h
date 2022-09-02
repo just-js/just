@@ -80,9 +80,6 @@ struct builtin {
   unsigned int size;
   const char* source;
 };
-struct handle {
-  void* ptr;
-};
 extern std::map<std::string, builtin*> builtins;
 extern std::map<std::string, register_plugin> modules;
 void builtins_add (const char* name, const char* source, 
@@ -119,6 +116,7 @@ void PID(const FunctionCallbackInfo<Value> &args);
 void Exit(const FunctionCallbackInfo<Value> &args);
 void Chdir(const FunctionCallbackInfo<Value> &args);
 void HRTime(const FunctionCallbackInfo<Value> &args);
+void AllocHRTime(const FunctionCallbackInfo<Value> &args);
 void Builtin(const FunctionCallbackInfo<Value> &args);
 void MemoryUsage(const FunctionCallbackInfo<Value> &args);
 void Builtins(const FunctionCallbackInfo<Value> &args);

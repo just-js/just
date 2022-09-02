@@ -3,7 +3,8 @@
 std::map<std::string, just::builtin*> just::builtins;
 std::map<std::string, just::register_plugin> just::modules;
 uint32_t scriptId = 1;
-just::handle* handles[1024];
+uint64_t* hrtimeptr;
+clock_t clock_id = CLOCK_MONOTONIC;
 
 ssize_t just::process_memory_usage() {
   char buf[1024];
@@ -48,9 +49,8 @@ err:
 
 uint64_t just::hrtime() {
   struct timespec t;
-  clock_t clock_id = CLOCK_MONOTONIC;
   if (clock_gettime(clock_id, &t)) return 0;
-  return t.tv_sec * (uint64_t) 1e9 + t.tv_nsec;
+  return (t.tv_sec * (uint64_t) 1e9) + t.tv_nsec;
 }
 
 void just::builtins_add (const char* name, const char* source, 
@@ -559,22 +559,23 @@ void just::Modules(const FunctionCallbackInfo<Value> &args) {
 }
 
 void just::HRTime(const FunctionCallbackInfo<Value> &args) {
-  int index = Local<Integer>::Cast(args[0])->Value();
-  // todo: check out of bounds etc.
-  just::handle* h = handles[index];
-  if (h) {
-    uint64_t* ptr = (uint64_t*)h->ptr;    
-    *ptr = just::hrtime();
+  if (hrtimeptr != NULL) {
+    *hrtimeptr = just::hrtime();
     return;
   }
-  h = (just::handle*)calloc(1, sizeof(just::handle));
-  Local<ArrayBuffer> ab = args[1].As<ArrayBuffer>();
-  std::shared_ptr<BackingStore> backing = ab->GetBackingStore();
-  h->ptr = static_cast<char *>(backing->Data());
-  uint64_t* ptr = (uint64_t*)h->ptr;
-  *ptr = just::hrtime();
-  h->ptr = ptr;
-  handles[index] = h;
+  Isolate *isolate = args.GetIsolate();
+  Local<BigUint64Array> array;
+  Local<ArrayBuffer> ab;
+  if (args.Length() > 0) {
+    array = args[0].As<BigUint64Array>();
+    ab = array->Buffer();
+  } else {
+    ab = ArrayBuffer::New(isolate, 8);
+    array = BigUint64Array::New(ab, 0, 1);
+    args.GetReturnValue().Set(array);
+  }
+  hrtimeptr = (uint64_t*)ab->GetBackingStore()->Data();
+  *hrtimeptr = just::hrtime();
 }
 
 void just::Init(Isolate* isolate, Local<ObjectTemplate> target) {
