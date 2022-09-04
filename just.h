@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/utsname.h>
-#include <v8-fast-api-calls.h>
 
 namespace just {
 

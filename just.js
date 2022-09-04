@@ -199,10 +199,10 @@
     const timerfd = just.sys.timer(repeat, timeout)
     loop.add(timerfd, (fd, event) => {
       callback()
-      just.net.read(fd, buf, 0, buf.byteLength)
+      just.fs.read(fd, buf, 0, buf.byteLength)
       if (repeat === 0) {
         loop.remove(fd)
-        just.net.close(fd)
+        just.fs.close(fd)
       }
     })
     return timerfd
@@ -214,7 +214,7 @@
 
   function clearTimeout (fd, loop = just.factory.loop) {
     loop.remove(fd)
-    just.net.close(fd)
+    just.fs.close(fd)
   }
 
   class SystemError extends Error {

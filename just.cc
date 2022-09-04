@@ -252,9 +252,10 @@ v8::Local<v8::Value> execModule(v8::Local<v8::Module> mod,
 }
 
 v8::MaybeLocal<v8::Promise> OnDynamicImport(v8::Local<v8::Context> context,
-                                        v8::Local<v8::ScriptOrModule> referrer,
-                                        v8::Local<v8::String> specifier,
-                                        v8::Local<v8::FixedArray> import_assertions) {
+  v8::Local<v8::Data> host_defined_options,
+  v8::Local<v8::Value> resource_name,
+  v8::Local<v8::String> specifier,
+  v8::Local<v8::FixedArray> import_assertions) {
   v8::Local<v8::Promise::Resolver> resolver =
       v8::Promise::Resolver::New(context).ToLocalChecked();
   v8::MaybeLocal<v8::Promise> promise(resolver->GetPromise());
