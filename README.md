@@ -89,3 +89,7 @@ Coming soon...
 - minimal dependencies - g++ and make only
 - keep LOC as small as possible < 5k
 - allocate as little as possible on v8 heap
+
+## Benchmarks
+
+One of the fastest web frameworks available according to the [TechEmpower Framework Benchmark](https://www.techempower.com/benchmarks/#section=data-r21&test=composite).
