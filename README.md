@@ -1,8 +1,10 @@
 # Just [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/just-js/just)
 
-A very small v8 javascript runtime for linux only
+## *** Attention ***
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/just-js/binder/HEAD)
+**17 Nov 2023**
+
+This project is not being actively maintained in it's current state. please see [lo](https://github.com/just-js/lo) for a new, low-level JavaScript runtime i am working on. Very shortly this should be in a place where I will be able to "resurrect" the "just" project and base it on lo. Keep an eye out over coming weeks on [twitter](https://twitter.com/justjs14)  or come join us on [discord](https://discord.gg/ZnNsBwaBKr) to discuss the new work. 🙏 🚀
 
 ## Build and Run
 
